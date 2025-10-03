@@ -64,9 +64,16 @@ def display_results(files: List[Tuple[Path, str]]) -> None:
     print(f"\nTrovati {len(files)} file:")
     print("-" * 80)
     
-    # Supporto colori: grassetto + blu
-    color_start = "\033[1;34m" if os.name != 'nt' or os.getenv('WT_SESSION') else ""
-    color_end = "\033[0m" if color_start else ""
+    # Rileva supporto colori
+    supports_color = (
+        os.getenv('COLORTERM') or 
+        os.getenv('TERM', '').endswith('color') or
+        os.getenv('WT_SESSION') or
+        (os.name != 'nt' and sys.stdout.isatty())
+    )
+    
+    color_start = "\033[1;34m" if supports_color else ""
+    color_end = "\033[0m" if supports_color else ""
     
     for i, (file_path, filename) in enumerate(files, 1):
         print(f"{i:2d}. {color_start}{filename}{color_end} ({file_path.parent})")

@@ -11,15 +11,18 @@
 - **Path handling**: Uso di pathlib.Path per cross-platform
 - **String formatting**: f-strings per interpolazione
 - **Commenti**: Commenti inline per logica complessa
+- **Colori terminale**: Rilevamento automatico supporto colori cross-platform
 
 ## Pattern utilizzati
 - **Cross-platform**: Controllo `os.name` per Windows/Linux
 - **Error handling**: Gestione graceful di OSError/PermissionError
 - **User interaction**: Input validation e feedback chiaro
 - **File operations**: Uso di glob patterns per ricerca file
+- **Color detection**: Controllo variabili ambiente (COLORTERM, TERM, WT_SESSION)
 
 ## Formattazione
 - **Indentazione**: 4 spazi
 - **Lunghezza linea**: ~80 caratteri (non rigida)
 - **Separatori**: Linee vuote tra funzioni
 - **Stringhe**: Doppi apici per stringhe, singoli per caratteri
+- **UX**: Schermo pulito ad ogni operazione, loop continuo
