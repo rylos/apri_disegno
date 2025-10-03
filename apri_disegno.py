@@ -64,12 +64,12 @@ def display_results(files: List[Tuple[Path, str]]) -> None:
     print(f"\nTrovati {len(files)} file:")
     print("-" * 80)
     
-    # Supporto grassetto: Linux sempre, Windows solo se supportato
-    bold_start = "\033[1m" if os.name != 'nt' or os.getenv('WT_SESSION') else ""
-    bold_end = "\033[0m" if bold_start else ""
+    # Supporto colori: grassetto + blu
+    color_start = "\033[1;34m" if os.name != 'nt' or os.getenv('WT_SESSION') else ""
+    color_end = "\033[0m" if color_start else ""
     
     for i, (file_path, filename) in enumerate(files, 1):
-        print(f"{i:2d}. {bold_start}{filename}{bold_end} ({file_path.parent})")
+        print(f"{i:2d}. {color_start}{filename}{color_end} ({file_path.parent})")
     print("-" * 80)
 
 def open_pdf(file_path: Path) -> bool:
@@ -86,24 +86,26 @@ def open_pdf(file_path: Path) -> bool:
 
 def main():
     """Funzione principale"""
-    print("=== RICERCA DISEGNI PDF ===")
-    
     while True:
+        # Pulisce schermo e mostra prompt
+        os.system('clear' if os.name != 'nt' else 'cls')
+        print("=== RICERCA DISEGNI PDF ===")
+        
         # Input codice disegno
         try:
-            search_code = input("\nInserire codice disegno (es. F353.01.0005LL o F353.01, INVIO per uscire): ").strip()
+            search_code = input("\nInserire codice disegno (es. F353.01.0005LL o F353.01): ").strip()
         except KeyboardInterrupt:
             print("\nOperazione annullata")
             break
         
         if not search_code:
-            print("Uscita dal programma")
-            break
+            continue
         
         # Percorso di rete
         network_path = get_network_path()
         if not network_path.exists():
             print(f"Percorso di rete non accessibile: {network_path}")
+            input("\nPremere INVIO per continuare...")
             continue
         
         # Ricerca cartelle valide
@@ -111,6 +113,7 @@ def main():
         valid_folders = find_valid_folders(network_path)
         if not valid_folders:
             print("Nessuna cartella valida trovata")
+            input("\nPremere INVIO per continuare...")
             continue
         
         # Ricerca file PDF
@@ -119,6 +122,7 @@ def main():
         
         if not pdf_files:
             print("Nessun file trovato")
+            input("\nPremere INVIO per continuare...")
             continue
         
         # Mostra risultati
@@ -126,7 +130,7 @@ def main():
         
         # Selezione file
         try:
-            choice = input(f"\nSelezionare file (1-{len(pdf_files)}, 0=NESSUNO, default=1): ").strip()
+            choice = input(f"\nSelezionare file (1-{len(pdf_files)}, 0=NESSUNO, INVIO=1): ").strip()
             if not choice:
                 choice = "1"
             
@@ -147,6 +151,9 @@ def main():
         except KeyboardInterrupt:
             print("\nOperazione annullata")
             break
+        
+        # Pausa prima di ricominciare
+        input("\nPremere INVIO per continuare...")
 
 if __name__ == "__main__":
     main()
