@@ -49,11 +49,27 @@ def get_cached_folders(base_path: Path) -> List[Path]:
     global _valid_folders_cache, _cache_timestamp
     current_time = time.time()
     
+    # Carica timestamp da file se non ancora fatto
+    if _cache_timestamp == 0:
+        cache_file = Path(".cache_timestamp")
+        if cache_file.exists():
+            try:
+                _cache_timestamp = float(cache_file.read_text().strip())
+            except (ValueError, OSError):
+                _cache_timestamp = 0
+    
     # Ricarica se cache vuota o passate più di 8 ore (28800 secondi)
     if _valid_folders_cache is None or (current_time - _cache_timestamp) > 28800:
         print("Caricamento cache cartelle...")
         _valid_folders_cache = find_valid_folders(base_path)
         _cache_timestamp = current_time
+        
+        # Salva timestamp su file
+        try:
+            Path(".cache_timestamp").write_text(str(_cache_timestamp))
+        except OSError:
+            pass
+        
         print(f"Cache caricata: {len(_valid_folders_cache)} cartelle")
     
     return _valid_folders_cache
