@@ -11,11 +11,13 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import List, Tuple, Optional
 
 # Cache globale per cartelle valide
 _valid_folders_cache: Optional[List[Path]] = None
+_cache_timestamp: float = 0
 
 def get_network_path() -> Path:
     """Restituisce il percorso di rete corretto per il sistema operativo"""
@@ -44,11 +46,16 @@ def find_valid_folders(base_path: Path) -> List[Path]:
 
 def get_cached_folders(base_path: Path) -> List[Path]:
     """Restituisce cartelle valide dalla cache o le carica se necessario"""
-    global _valid_folders_cache
-    if _valid_folders_cache is None:
+    global _valid_folders_cache, _cache_timestamp
+    current_time = time.time()
+    
+    # Ricarica se cache vuota o passate più di 8 ore (28800 secondi)
+    if _valid_folders_cache is None or (current_time - _cache_timestamp) > 28800:
         print("Caricamento cache cartelle...")
         _valid_folders_cache = find_valid_folders(base_path)
+        _cache_timestamp = current_time
         print(f"Cache caricata: {len(_valid_folders_cache)} cartelle")
+    
     return _valid_folders_cache
 
 def search_pdf_files(folders: List[Path], search_term: str) -> List[Tuple[Path, str]]:
