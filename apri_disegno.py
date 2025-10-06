@@ -174,7 +174,7 @@ def main():
         network_path = get_network_path()
         if not network_path.exists():
             print(f"Percorso di rete non accessibile: {network_path}")
-            input("\nPremere INVIO per continuare...")
+            time.sleep(2)
             continue
         
         # Ricerca cartelle valide
@@ -182,7 +182,7 @@ def main():
         valid_folders = get_cached_folders(network_path)
         if not valid_folders:
             print("Nessuna cartella valida trovata")
-            input("\nPremere INVIO per continuare...")
+            time.sleep(2)
             continue
         
         # Ricerca file PDF
@@ -199,7 +199,7 @@ def main():
         
         if not all_files:
             print("Nessun file trovato")
-            input("\nPremere INVIO per continuare...")
+            time.sleep(2)
             continue
         
         # Mostra risultati
@@ -230,7 +230,7 @@ def main():
             break
         
         # Pausa prima di ricominciare
-        input("\nPremere INVIO per continuare...")
+        time.sleep(2)
 
 if __name__ == "__main__":
     main()
