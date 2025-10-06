@@ -1,4 +1,4 @@
-# Comandi Suggeriti
+# Comandi Suggeriti - Release 1.1
 
 ## Esecuzione programma
 ```bash
@@ -8,6 +8,19 @@ python3 apri_disegno.py
 # Con permessi di esecuzione
 chmod +x apri_disegno.py
 ./apri_disegno.py
+```
+
+## Script cache server (srv03)
+```bash
+# Esecuzione manuale script cache
+./update_pdf_cache.sh
+
+# Verifica cache generata
+ls -la /volume1/Elaborati_Tecnici/.pdf_cache.txt
+wc -l /volume1/Elaborati_Tecnici/.pdf_cache.txt
+
+# Controllo contenuto cache (prime righe)
+head -20 /volume1/Elaborati_Tecnici/.pdf_cache.txt
 ```
 
 ## Sviluppo e testing
@@ -30,7 +43,7 @@ ruff check apri_disegno.py
 ```bash
 # Status e commit
 git status
-git add apri_disegno.py
+git add apri_disegno.py update_pdf_cache.sh
 git commit -m "Descrizione modifiche"
 
 # Push/pull
@@ -38,18 +51,16 @@ git push origin main
 git pull origin main
 ```
 
-## Comandi sistema Linux
+## Debug e troubleshooting
 ```bash
-# Navigazione
-ls -la
-cd /path/to/directory
-pwd
+# Test accesso percorsi rete
+ls -la /mnt/srv01/DB_DISEGNI/
+ls -la /mnt/srv03/elaborati_tecnici/.pdf_cache.txt
 
-# Ricerca file
-find . -name "*.py"
-grep -r "pattern" .
+# Verifica cache locale
+ls -la .cache_timestamp
+cat .cache_timestamp
 
-# Permessi
-chmod +x file.py
-chown user:group file.py
+# Test ricerca manuale
+grep -i "codice" /mnt/srv03/elaborati_tecnici/.pdf_cache.txt
 ```

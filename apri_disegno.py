@@ -94,6 +94,26 @@ def search_pdf_files(folders: List[Path], search_term: str) -> List[Tuple[Path, 
     
     return sorted(found_files, key=lambda x: x[1])
 
+def search_elaborati_tecnici(search_term: str) -> List[Tuple[Path, str]]:
+    """Cerca file PDF nel cache elaborati tecnici"""
+    found_files = []
+    search_lower = search_term.lower()
+    cache_file = Path("/mnt/srv03/elaborati_tecnici/.pdf_cache.txt")
+    base_path = Path("/mnt/srv03/elaborati_tecnici")
+    
+    try:
+        if cache_file.exists():
+            for line in cache_file.read_text().splitlines():
+                line = line.strip()
+                if line and search_lower in line.lower():
+                    full_path = base_path / line
+                    if full_path.exists():
+                        found_files.append((full_path, full_path.name))
+    except (OSError, PermissionError):
+        pass
+    
+    return sorted(found_files, key=lambda x: x[1])
+
 def display_results(files: List[Tuple[Path, str]]) -> None:
     """Mostra i risultati in modo ordinato e numerati"""
     print(f"\nTrovati {len(files)} file:")
@@ -107,10 +127,17 @@ def display_results(files: List[Tuple[Path, str]]) -> None:
         (os.name != 'nt' and sys.stdout.isatty())
     )
     
-    color_start = "\033[1;34m" if supports_color else ""
-    color_end = "\033[0m" if supports_color else ""
-    
     for i, (file_path, filename) in enumerate(files, 1):
+        if supports_color:
+            # Verde per DB_DISEGNI, giallo per elaborati_tecnici
+            if "/mnt/srv01/DB_DISEGNI" in str(file_path):
+                color_start = "\033[1;32m"  # Verde
+            else:
+                color_start = "\033[1;33m"  # Giallo
+            color_end = "\033[0m"
+        else:
+            color_start = color_end = ""
+        
         print(f"{i:2d}. {color_start}{filename}{color_end} ({file_path.parent})")
     print("-" * 80)
 
@@ -162,25 +189,33 @@ def main():
         print(f"Ricerca file PDF con '{search_code}'...")
         pdf_files = search_pdf_files(valid_folders, search_code)
         
-        if not pdf_files:
+        # Ricerca elaborati tecnici solo se nessun risultato in DB_DISEGNI
+        if pdf_files:
+            all_files = pdf_files
+        else:
+            print("Ricerca elaborati tecnici...")
+            elaborati_files = search_elaborati_tecnici(search_code)
+            all_files = elaborati_files
+        
+        if not all_files:
             print("Nessun file trovato")
             input("\nPremere INVIO per continuare...")
             continue
         
         # Mostra risultati
-        display_results(pdf_files)
+        display_results(all_files)
         
         # Selezione file
         try:
-            choice = input(f"\nSelezionare file (1-{len(pdf_files)}, 0=NESSUNO, INVIO=1): ").strip()
+            choice = input(f"\nSelezionare file (1-{len(all_files)}, 0=NESSUNO, INVIO=1): ").strip()
             if not choice:
                 choice = "1"
             
             index = int(choice)
             if index == 0:
                 print("Nessun file selezionato")
-            elif 1 <= index <= len(pdf_files):
-                selected_file = pdf_files[index-1][0]
+            elif 1 <= index <= len(all_files):
+                selected_file = all_files[index-1][0]
                 print(f"Apertura: {selected_file.name}")
                 
                 if not open_pdf(selected_file):
