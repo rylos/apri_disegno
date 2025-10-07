@@ -71,6 +71,7 @@ cat > /home/prod/apri_disegno/apri_disegno_loop.sh << 'EOF'
 #!/bin/bash
 while true; do
     gnome-terminal --geometry=182x59+0+0 --hide-menubar -- bash -c "cd /home/prod/apri_disegno && python3 apri_disegno.py"
+    wait
     sleep 1
 done
 EOF
