@@ -68,7 +68,7 @@ chmod +x /home/prod/apri_disegno/apri_disegno.py
 
 # Crea icona desktop per utente prod
 echo "Creazione icona desktop..."
-cat > /home/prod/Desktop/apri_disegno.desktop << 'EOF'
+cat > /home/prod/Scrivania/apri_disegno.desktop << 'EOF'
 [Desktop Entry]
 Version=1.0
 Type=Application
@@ -81,11 +81,11 @@ Categories=Office;Engineering;
 StartupNotify=true
 EOF
 
-chmod +x /home/prod/Desktop/apri_disegno.desktop
-chown prod:prod /home/prod/Desktop/apri_disegno.desktop
+chmod +x /home/prod/Scrivania/apri_disegno.desktop
+chown prod:prod /home/prod/Scrivania/apri_disegno.desktop
 
 # Crea icona MES Qualitas
-cat > /home/prod/Desktop/qualitas.desktop << 'EOF'
+cat > /home/prod/Scrivania/qualitas.desktop << 'EOF'
 [Desktop Entry]
 Version=1.0
 Type=Application
@@ -98,11 +98,11 @@ Categories=Network;WebBrowser;
 StartupNotify=true
 EOF
 
-chmod +x /home/prod/Desktop/qualitas.desktop
-chown prod:prod /home/prod/Desktop/qualitas.desktop
+chmod +x /home/prod/Scrivania/qualitas.desktop
+chown prod:prod /home/prod/Scrivania/qualitas.desktop
 
 # Crea icona Elaborati Tecnici
-cat > /home/prod/Desktop/elaborati_tecnici.desktop << 'EOF'
+cat > /home/prod/Scrivania/elaborati_tecnici.desktop << 'EOF'
 [Desktop Entry]
 Version=1.0
 Type=Application
@@ -115,8 +115,8 @@ Categories=System;FileManager;
 StartupNotify=true
 EOF
 
-chmod +x /home/prod/Desktop/elaborati_tecnici.desktop
-chown prod:prod /home/prod/Desktop/elaborati_tecnici.desktop
+chmod +x /home/prod/Scrivania/elaborati_tecnici.desktop
+chown prod:prod /home/prod/Scrivania/elaborati_tecnici.desktop
 
 # Test mount
 echo "Test mount..."
