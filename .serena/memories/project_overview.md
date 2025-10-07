@@ -13,18 +13,25 @@ Programma Python per ricerca e apertura di disegni PDF da percorsi di rete azien
 - **Cache intelligente** con scadenza 8 ore per DB_DISEGNI
 - **Ricerca condizionale**: elaborati_tecnici solo se DB_DISEGNI non trova risultati
 - **Colori differenziati**: verde per DB_DISEGNI, giallo per elaborati_tecnici
+- **Installazione automatica** per PC client Linux Mint
 
 ## Tech Stack
 - **Linguaggio**: Python 3.12
 - **Librerie**: Solo librerie standard (pathlib, subprocess, re, os, sys, time)
 - **Dipendenze**: Nessuna dipendenza esterna
 - **Cache server**: Script bash con fd (find alternative) su srv03
+- **Installazione**: Script bash automatico per Linux Mint
 
 ## Struttura progetto
 ```
 apri_disegno/
 ├── apri_disegno.py         # File principale
 ├── update_pdf_cache.sh     # Script cache server srv03
+├── install.sh              # Script installazione automatica Linux Mint
+├── etc/
+│   ├── fstab.add.txt       # Righe da aggiungere a fstab
+│   └── samba/
+│       └── credenziali     # Credenziali CIFS (chmod 600)
 ├── README.md               # Documentazione
 ├── .gitignore              # Gitignore standard Python
 ├── .cache_timestamp        # Cache timestamp (escluso da git)
@@ -38,6 +45,7 @@ apri_disegno/
 - Pattern di ricerca con regex per cartelle valide
 - Cache globale con controllo temporale automatico per DB_DISEGNI
 - Cache file testuale per elaborati_tecnici (generata da script server)
+- **Installazione automatica** con mount CIFS e icone desktop
 
 ## Performance
 - Cache cartelle valide DB_DISEGNI (40 cartelle) caricata solo al primo accesso
@@ -49,3 +57,11 @@ apri_disegno/
 1. **Prima ricerca**: DB_DISEGNI con cache intelligente
 2. **Seconda ricerca**: Solo se prima ricerca = 0 risultati, cerca in elaborati_tecnici via cache file
 3. **Visualizzazione**: Colori differenziati per origine (verde/giallo)
+
+## Installazione client Linux Mint
+- **Repository**: https://github.com/rylos/apri_disegno.git
+- **Percorso**: /home/prod/apri_disegno/
+- **Mount points**: /mnt/srv01/DB_DISEGNI, /mnt/srv03/elaborati_tecnici
+- **Credenziali**: /etc/samba/credenziali (chmod 600)
+- **Icone desktop**: Apri Disegno, MES Qualitas, Elaborati Tecnici
+- **Esecuzione**: sudo ./install.sh

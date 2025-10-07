@@ -10,6 +10,16 @@ chmod +x apri_disegno.py
 ./apri_disegno.py
 ```
 
+## Installazione client Linux Mint
+```bash
+# Clona repository
+git clone https://github.com/rylos/apri_disegno.git
+cd apri_disegno
+
+# Installazione automatica (richiede sudo)
+sudo ./install.sh
+```
+
 ## Script cache server (srv03)
 ```bash
 # Esecuzione manuale script cache
@@ -43,7 +53,7 @@ ruff check apri_disegno.py
 ```bash
 # Status e commit
 git status
-git add apri_disegno.py update_pdf_cache.sh
+git add apri_disegno.py update_pdf_cache.sh install.sh etc/
 git commit -m "Descrizione modifiche"
 
 # Push/pull
@@ -63,4 +73,12 @@ cat .cache_timestamp
 
 # Test ricerca manuale
 grep -i "codice" /mnt/srv03/elaborati_tecnici/.pdf_cache.txt
+
+# Verifica mount CIFS
+mount | grep cifs
+systemctl status mnt-srv01-DB_DISEGNI.automount
+systemctl status mnt-srv03-elaborati_tecnici.automount
+
+# Test icone desktop
+ls -la /home/prod/Desktop/*.desktop
 ```

@@ -1,0 +1,127 @@
+#!/bin/bash
+
+# Script installazione apri_disegno per Linux Mint
+# Eseguire con: sudo ./install.sh
+
+set -e
+
+echo "=== Installazione apri_disegno ==="
+
+# Verifica esecuzione come root
+if [[ $EUID -ne 0 ]]; then
+   echo "Errore: Eseguire come root (sudo ./install.sh)"
+   exit 1
+fi
+
+# Verifica utente prod
+if ! id "prod" &>/dev/null; then
+    echo "Errore: Utente 'prod' non trovato"
+    exit 1
+fi
+
+# Clona repository se non esiste
+if [ ! -d "/home/prod/apri_disegno" ]; then
+    echo "Clonazione repository..."
+    cd /home/prod
+    sudo -u prod git clone https://github.com/rylos/apri_disegno.git
+    chown -R prod:prod /home/prod/apri_disegno
+else
+    echo "Repository già presente, aggiornamento..."
+    cd /home/prod/apri_disegno
+    sudo -u prod git pull
+fi
+
+# Crea directory mount points
+echo "Creazione mount points..."
+mkdir -p /mnt/srv01/DB_DISEGNI
+mkdir -p /mnt/srv03/elaborati_tecnici
+
+# Crea directory samba
+mkdir -p /etc/samba
+
+# Copia credenziali samba
+echo "Configurazione credenziali samba..."
+cp /home/prod/apri_disegno/etc/samba/credenziali /etc/samba/credenziali
+chmod 600 /etc/samba/credenziali
+chown root:root /etc/samba/credenziali
+
+# Backup fstab
+cp /etc/fstab /etc/fstab.backup.$(date +%Y%m%d_%H%M%S)
+
+# Aggiunge righe fstab se non presenti
+echo "Configurazione fstab..."
+if ! grep -q "srv01.liftingitalia.local" /etc/fstab; then
+    echo "" >> /etc/fstab
+    cat /home/prod/apri_disegno/etc/fstab.add.txt >> /etc/fstab
+    echo "Righe fstab aggiunte"
+else
+    echo "Righe fstab già presenti"
+fi
+
+# Installa dipendenze
+echo "Installazione dipendenze..."
+apt update
+apt install -y cifs-utils python3
+
+# Rende eseguibile il programma
+chmod +x /home/prod/apri_disegno/apri_disegno.py
+
+# Crea icona desktop per utente prod
+echo "Creazione icona desktop..."
+cat > /home/prod/Desktop/apri_disegno.desktop << 'EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Apri Disegno
+Comment=Ricerca e apertura disegni PDF
+Exec=gnome-terminal -- bash -c "cd /home/prod/apri_disegno && python3 apri_disegno.py; read -p 'Premi INVIO per chiudere...'"
+Icon=applications-engineering
+Terminal=false
+Categories=Office;Engineering;
+StartupNotify=true
+EOF
+
+chmod +x /home/prod/Desktop/apri_disegno.desktop
+chown prod:prod /home/prod/Desktop/apri_disegno.desktop
+
+# Crea icona MES Qualitas
+cat > /home/prod/Desktop/qualitas.desktop << 'EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=MES Qualitas
+Comment=Sistema MES Qualitas
+Exec=xdg-open http://mes2.liftingitalia.local:81/QualitasWebClient/Account/Login
+Icon=applications-internet
+Terminal=false
+Categories=Network;WebBrowser;
+StartupNotify=true
+EOF
+
+chmod +x /home/prod/Desktop/qualitas.desktop
+chown prod:prod /home/prod/Desktop/qualitas.desktop
+
+# Crea icona Elaborati Tecnici
+cat > /home/prod/Desktop/elaborati_tecnici.desktop << 'EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Elaborati Tecnici
+Comment=Cartella elaborati tecnici di rete
+Exec=xdg-open /mnt/srv03/elaborati_tecnici
+Icon=folder-documents
+Terminal=false
+Categories=System;FileManager;
+StartupNotify=true
+EOF
+
+chmod +x /home/prod/Desktop/elaborati_tecnici.desktop
+chown prod:prod /home/prod/Desktop/elaborati_tecnici.desktop
+
+# Test mount
+echo "Test mount..."
+systemctl daemon-reload
+mount -a
+
+echo "=== Installazione completata ==="
+echo "Eseguire: cd /home/prod/apri_disegno && python3 apri_disegno.py"
