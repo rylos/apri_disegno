@@ -10,6 +10,27 @@ Programma Python per ricerca e apertura rapida di disegni PDF da rete aziendale.
 - 📂 **Apertura automatica** con programma predefinito
 - 🎨 **Colori differenziati** per origine risultati (verde/giallo)
 - ⚡ **Zero dipendenze** (solo librerie standard Python)
+- 🔧 **Installazione automatica** Linux Mint con script
+- 🔄 **App persistente** con riavvio automatico se chiusa
+- 📅 **Aggiornamenti automatici** git pull giornalieri
+
+## Installazione Linux Mint
+
+```bash
+# Clona repository
+git clone https://github.com/rylos/apri_disegno.git
+cd apri_disegno
+
+# Installazione automatica (richiede sudo)
+sudo ./install.sh
+```
+
+**Cosa installa**:
+- Mount automatici CIFS per srv01/DB_DISEGNI e srv03/elaborati_tecnici
+- 3 icone desktop: Apri Disegno, MES Qualitas, Elaborati Tecnici
+- Avvio automatico app all'accensione PC
+- App non chiudibile (riavvio automatico in 100ms)
+- Aggiornamenti git pull alle 6:00 (cron + anacron)
 
 ## Utilizzo
 
