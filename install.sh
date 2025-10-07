@@ -118,6 +118,11 @@ EOF
 chmod +x /home/prod/Scrivania/elaborati_tecnici.desktop
 chown prod:prod /home/prod/Scrivania/elaborati_tecnici.desktop
 
+# Configura avvio automatico
+mkdir -p /home/prod/.config/autostart
+cp /home/prod/Scrivania/apri_disegno.desktop /home/prod/.config/autostart/
+chown -R prod:prod /home/prod/.config/autostart
+
 # Test mount
 echo "Test mount..."
 systemctl daemon-reload
