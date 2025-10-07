@@ -70,9 +70,8 @@ chmod +x /home/prod/apri_disegno/apri_disegno.py
 cat > /home/prod/apri_disegno/apri_disegno_loop.sh << 'EOF'
 #!/bin/bash
 while true; do
-    cd /home/prod/apri_disegno
-    python3 apri_disegno.py
-    sleep 2
+    gnome-terminal --geometry=182x59+0+0 --hide-menubar -- bash -c "cd /home/prod/apri_disegno && python3 apri_disegno.py"
+    sleep 1
 done
 EOF
 chmod +x /home/prod/apri_disegno/apri_disegno_loop.sh
@@ -86,7 +85,7 @@ Version=1.0
 Type=Application
 Name=Apri Disegno
 Comment=Ricerca e apertura disegni PDF
-Exec=gnome-terminal --geometry=182x59+0+0 --hide-menubar -- /home/prod/apri_disegno/apri_disegno_loop.sh
+Exec=/home/prod/apri_disegno/apri_disegno_loop.sh
 Icon=applications-engineering
 Terminal=false
 Categories=Office;Engineering;
