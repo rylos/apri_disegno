@@ -121,7 +121,12 @@ chown prod:prod /home/prod/Scrivania/elaborati_tecnici.desktop
 # Test mount
 echo "Test mount..."
 systemctl daemon-reload
-mount -a
+if ! mount | grep -q "srv01.liftingitalia.local"; then
+    mount /mnt/srv01/DB_DISEGNI 2>/dev/null || echo "Mount srv01 già presente o non disponibile"
+fi
+if ! mount | grep -q "srv03.liftingitalia.local"; then
+    mount /mnt/srv03/elaborati_tecnici 2>/dev/null || echo "Mount srv03 già presente o non disponibile"
+fi
 
 # Configura cron per aggiornamento giornaliero
 echo "Configurazione aggiornamento automatico..."
