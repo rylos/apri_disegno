@@ -147,7 +147,12 @@ fi
 
 # Configura cron per aggiornamento giornaliero
 echo "Configurazione aggiornamento automatico..."
-(crontab -u prod -l 2>/dev/null; echo "0 6 * * * cd /home/prod/apri_disegno && git pull origin main >/dev/null 2>&1") | crontab -u prod -
+if ! crontab -u prod -l 2>/dev/null | grep -q "git pull origin main"; then
+    (crontab -u prod -l 2>/dev/null; echo "0 6 * * * cd /home/prod/apri_disegno && git pull origin main >/dev/null 2>&1") | crontab -u prod -
+    echo "Cron job aggiunto"
+else
+    echo "Cron job già presente"
+fi
 
 # Configura anacron per recupero se PC spento
 mkdir -p /etc/anacrontab.d
