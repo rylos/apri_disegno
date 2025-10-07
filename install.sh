@@ -133,6 +133,7 @@ echo "Configurazione aggiornamento automatico..."
 (crontab -u prod -l 2>/dev/null; echo "0 6 * * * cd /home/prod/apri_disegno && git pull origin main >/dev/null 2>&1") | crontab -u prod -
 
 # Configura anacron per recupero se PC spento
+mkdir -p /etc/anacrontab.d
 cat > /etc/anacrontab.d/apri_disegno << 'EOF'
 1	5	apri_disegno_update	sudo -u prod bash -c "cd /home/prod/apri_disegno && git pull origin main >/dev/null 2>&1"
 EOF
