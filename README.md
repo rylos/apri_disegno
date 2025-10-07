@@ -64,4 +64,4 @@ apri_disegno/
 
 ---
 
-**Version 1.1** - Ottimizzato per velocità e semplicità d'uso.
+**Version 1.1** - Sistema completo con installazione automatica, app persistente e aggiornamenti automatici.

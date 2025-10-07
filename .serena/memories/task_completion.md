@@ -38,9 +38,28 @@
 
 3. **Commit con messaggio descrittivo**
    ```bash
-   git add apri_disegno.py update_pdf_cache.sh README.md
+   git add apri_disegno.py update_pdf_cache.sh install.sh README.md
    git commit -m "Descrizione chiara delle modifiche"
    ```
+
+## Test installazione Linux Mint
+1. **Script installazione**
+   ```bash
+   sudo ./install.sh
+   ```
+
+2. **Verifica componenti installati**
+   - Mount CIFS funzionanti (/mnt/srv01, /mnt/srv03)
+   - 3 icone desktop create in /home/prod/Scrivania
+   - App avvio automatico configurato
+   - Cron job aggiornamento (senza duplicati)
+   - Wrapper riavvio automatico funzionante
+
+3. **Test app persistente**
+   - App si avvia automaticamente all'accensione
+   - Terminale 195x59 posizionato angolo superiore sinistro
+   - Riavvio automatico in 100ms se chiusa
+   - Wrapper script previene chiusura definitiva
 
 ## Note importanti Release 1.1
 - **Doppia ricerca**: DB_DISEGNI (primaria) + elaborati_tecnici (secondaria)
@@ -49,5 +68,8 @@
 - **Cache file**: `/mnt/srv03/elaborati_tecnici/.pdf_cache.txt` (generato da server)
 - **Colori**: Verde per DB_DISEGNI, giallo per elaborati_tecnici
 - **Performance**: Cache intelligente DB_DISEGNI + cache file elaborati_tecnici
+- **Installazione**: Script automatico completo per Linux Mint
+- **App persistente**: Wrapper con riavvio 100ms, terminale 195x59
+- **Aggiornamenti**: Git pull alle 6:00 (cron + anacron)
 - **Dipendenze server**: Script richiede `fd` (find alternative) su srv03
 - **Filtri cache**: Esclude snapshot, @eaDir, #recycle - solo PDF modificati ultimo anno
