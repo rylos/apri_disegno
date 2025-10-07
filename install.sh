@@ -74,7 +74,7 @@ Version=1.0
 Type=Application
 Name=Apri Disegno
 Comment=Ricerca e apertura disegni PDF
-Exec=gnome-terminal -- bash -c "cd /home/prod/apri_disegno && python3 apri_disegno.py; read -p 'Premi INVIO per chiudere...'"
+Exec=gnome-terminal --geometry=160x50+0+0 -- bash -c "cd /home/prod/apri_disegno && python3 apri_disegno.py; read -p 'Premi INVIO per chiudere...'"
 Icon=applications-engineering
 Terminal=false
 Categories=Office;Engineering;
