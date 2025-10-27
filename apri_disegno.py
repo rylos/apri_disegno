@@ -98,8 +98,13 @@ def search_elaborati_tecnici(search_term: str) -> List[Tuple[Path, str]]:
     """Cerca file PDF nel cache elaborati tecnici"""
     found_files = []
     search_lower = search_term.lower()
-    cache_file = Path("/mnt/srv03/elaborati_tecnici/.pdf_cache.txt")
-    base_path = Path("/mnt/srv03/elaborati_tecnici")
+    
+    if os.name == 'nt':  # Windows
+        base_path = Path(r"\\srv03\Elaborati_Tecnici")
+        cache_file = base_path / ".pdf_cache.txt"
+    else:  # Linux
+        base_path = Path("/mnt/srv03/elaborati_tecnici")
+        cache_file = base_path / ".pdf_cache.txt"
     
     try:
         if cache_file.exists():
