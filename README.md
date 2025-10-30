@@ -5,6 +5,7 @@ Programma Python per ricerca e apertura rapida di disegni PDF da rete aziendale.
 ## Caratteristiche
 
 - 🔍 **Doppia ricerca** per codice disegno (DB_DISEGNI + elaborati_tecnici)
+- 🔁 **Loop risultati** per elaborati_tecnici (opzione R per nuova ricerca)
 - 🚀 **Cache intelligente** con scadenza automatica (8 ore)
 - 🖥️ **Cross-platform** (Windows/Linux)
 - 📂 **Apertura automatica** con programma predefinito
@@ -64,4 +65,4 @@ apri_disegno/
 
 ---
 
-**Version 1.1** - Sistema completo con installazione automatica, app persistente e aggiornamenti automatici.
+**Version 1.2** - Loop risultati per elaborati_tecnici con opzione R per nuova ricerca.
