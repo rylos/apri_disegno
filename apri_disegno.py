@@ -167,7 +167,7 @@ def main():
         
         # Input codice disegno
         try:
-            search_code = input("\nInserire codice disegno (es. F353.01.0005LL o F353.01): ").strip()
+            search_code = input("\nInserire codice disegno (es. F353.01.0005LL o 250728FC): ").strip()
         except KeyboardInterrupt:
             print("\nOperazione annullata")
             break
@@ -195,47 +195,60 @@ def main():
         pdf_files = search_pdf_files(valid_folders, search_code)
         
         # Ricerca elaborati tecnici solo se nessun risultato in DB_DISEGNI
+        from_elaborati = False
         if pdf_files:
             all_files = pdf_files
         else:
             print("Ricerca elaborati tecnici...")
             elaborati_files = search_elaborati_tecnici(search_code)
             all_files = elaborati_files
+            from_elaborati = True
         
         if not all_files:
             print("Nessun file trovato")
             time.sleep(2)
             continue
         
-        # Mostra risultati
-        display_results(all_files)
-        
-        # Selezione file
-        try:
-            choice = input(f"\nSelezionare file (1-{len(all_files)}, 0=NESSUNO, INVIO=1): ").strip()
-            if not choice:
-                choice = "1"
+        # Loop risultati - ripropone solo se da elaborati_tecnici
+        while True:
+            os.system('clear' if os.name != 'nt' else 'cls')
+            display_results(all_files)
             
-            index = int(choice)
-            if index == 0:
-                print("Nessun file selezionato")
-            elif 1 <= index <= len(all_files):
-                selected_file = all_files[index-1][0]
-                print(f"Apertura: {selected_file.name}")
+            try:
+                if from_elaborati:
+                    choice = input(f"\nSelezionare file (1-{len(all_files)}, 0=NESSUNO, R=NUOVA RICERCA, INVIO=1): ").strip()
+                    if choice.upper() == 'R':
+                        break
+                else:
+                    choice = input(f"\nSelezionare file (1-{len(all_files)}, 0=NESSUNO, INVIO=1): ").strip()
                 
-                if not open_pdf(selected_file):
-                    print("Errore: impossibile aprire il file")
-            else:
-                print("Selezione non valida")
+                if not choice:
+                    choice = "1"
                 
-        except ValueError:
-            print("Input non valido")
-        except KeyboardInterrupt:
-            print("\nOperazione annullata")
-            break
-        
-        # Pausa prima di ricominciare
-        time.sleep(2)
+                index = int(choice)
+                if index == 0:
+                    print("Nessun file selezionato")
+                elif 1 <= index <= len(all_files):
+                    selected_file = all_files[index-1][0]
+                    print(f"Apertura: {selected_file.name}")
+                    
+                    if not open_pdf(selected_file):
+                        print("Errore: impossibile aprire il file")
+                else:
+                    print("Selezione non valida")
+                    
+            except ValueError:
+                print("Input non valido")
+            except KeyboardInterrupt:
+                print("\nOperazione annullata")
+                return
+            
+            # Se non da elaborati_tecnici, esce dopo una selezione
+            if not from_elaborati:
+                time.sleep(2)
+                break
+            
+            time.sleep(1)
 
 if __name__ == "__main__":
     main()
