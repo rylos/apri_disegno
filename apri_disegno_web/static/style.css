@@ -213,6 +213,55 @@ button:hover {
     border: 1px solid #e6d0d4;
 }
 
+/* Spinner */
+.htmx-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.htmx-indicator.htmx-request {
+    display: flex;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    animation: rotate 1s linear infinite;
+}
+
+.spinner circle {
+    stroke: #2959aa;
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+}
+
+.spinner-text {
+    color: #343b58;
+    font-size: 14px;
+}
+
+@keyframes rotate {
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dasharray: 1, 150;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -124;
+    }
+}
+
 /* Dark Theme */
 body.dark-theme {
     background: #1a1b26;
@@ -312,4 +361,12 @@ body.dark-theme .error {
     background: #3d2932;
     color: #f7768e;
     border-color: #5a3e4a;
+}
+
+body.dark-theme .spinner circle {
+    stroke: #7aa2f7;
+}
+
+body.dark-theme .spinner-text {
+    color: #c0caf5;
 }

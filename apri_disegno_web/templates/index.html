@@ -27,7 +27,7 @@
             <span class="legend-item"><span class="color-box et"></span> Elaborati Tecnici</span>
         </div>
         
-        <form hx-post="/search" hx-target="#results" hx-swap="innerHTML">
+        <form hx-post="/search" hx-target="#results" hx-swap="innerHTML" hx-indicator="#spinner">
             <input type="text" 
                    id="search-input"
                    name="search_term" 
@@ -38,16 +38,25 @@
             <button type="button" onclick="resetSearch()" class="reset-btn" title="Pulisci ricerca">✕</button>
         </form>
         
+        <div id="spinner" class="htmx-indicator">
+            <svg class="spinner" viewBox="0 0 50 50">
+                <circle cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+            </svg>
+            <span class="spinner-text">Ricerca in corso...</span>
+        </div>
+        
         <div id="results"></div>
     </div>
 
     <script>
-        // Gestione risposta ricerca
-        document.body.addEventListener('htmx:afterRequest', function(evt) {
+        // Intercetta PRIMA che htmx inserisca il contenuto
+        document.body.addEventListener('htmx:beforeSwap', function(evt) {
             if (evt.detail.xhr.status === 200) {
+                evt.preventDefault(); // Previene inserimento JSON raw
                 const data = JSON.parse(evt.detail.xhr.response);
                 renderResults(data.files);
             } else if (evt.detail.xhr.status === 404 || evt.detail.xhr.status === 400) {
+                evt.preventDefault();
                 const data = JSON.parse(evt.detail.xhr.response);
                 document.getElementById('results').innerHTML = 
                     `<div class="error">${data.error}</div>`;

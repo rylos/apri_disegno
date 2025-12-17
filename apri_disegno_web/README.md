@@ -18,6 +18,7 @@ Web app per ricerca e visualizzazione disegni PDF da rete aziendale.
 - 🚀 Zero installazione client
 - 🎯 Logo AreaLifting e favicon
 - 🔄 Mount CIFS automatici
+- ⏳ Spinner animato con indicatore ricerca
 
 ## Deploy su server Docker
 
@@ -103,5 +104,5 @@ apri_disegno_web/
 
 ---
 
-**Version 1.0** - Flask + htmx + Tokyo Night
+**Version 1.1** - Flask + htmx + Tokyo Night + Spinner animato
 
