@@ -56,7 +56,10 @@ def search_db_disegni(search_term: str) -> List[Tuple[Path, str, str]]:
     
     for folder in get_cached_folders():
         try:
-            for pdf_file in folder.glob("*.pdf"):
+            pdf_files = set()
+            pdf_files.update(folder.glob("*.pdf"))
+            pdf_files.update(folder.glob("*.PDF"))
+            for pdf_file in pdf_files:
                 if search_lower in pdf_file.stem.lower():
                     found.append((pdf_file, pdf_file.name, "db_disegni"))
         except (OSError, PermissionError):
