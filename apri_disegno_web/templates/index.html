@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ricerca Disegni PDF</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title-group">
+                <img src="/static/logo.svg" alt="AreaLifting" class="logo">
+                <h1>Ricerca Disegni PDF</h1>
+            </div>
+            <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="legend">
+            <span class="legend-item"><span class="color-box db"></span> DB_DISEGNI</span>
+            <span class="legend-item"><span class="color-box et"></span> Elaborati Tecnici</span>
+        </div>
+        
+        <form hx-post="/search" hx-target="#results" hx-swap="innerHTML">
+            <input type="text" 
+                   id="search-input"
+                   name="search_term" 
+                   placeholder="Inserire codice disegno (es. F353.01.0005, 250700)" 
+                   autofocus 
+                   required>
+            <button type="submit">Cerca</button>
+            <button type="button" onclick="resetSearch()" class="reset-btn" title="Pulisci ricerca">✕</button>
+        </form>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Gestione risposta ricerca
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            if (evt.detail.xhr.status === 200) {
+                const data = JSON.parse(evt.detail.xhr.response);
+                renderResults(data.files);
+            } else if (evt.detail.xhr.status === 404 || evt.detail.xhr.status === 400) {
+                const data = JSON.parse(evt.detail.xhr.response);
+                document.getElementById('results').innerHTML = 
+                    `<div class="error">${data.error}</div>`;
+            }
+        });
+
+        function renderResults(files) {
+            const html = `
+                <div class="results-header">Trovati ${files.length} file:</div>
+                <div class="results-list">
+                    ${files.map(file => `
+                        <div class="result-item ${file.source}">
+                            <a href="/pdf${file.path}" target="_blank">
+                                <span class="filename">${file.name}</span>
+                                <span class="path">${file.parent}</span>
+                            </a>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('results').innerHTML = html;
+        }
+
+        // Theme toggle
+        function resetSearch() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('search-input').focus();
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const isDark = body.classList.toggle('dark-theme');
+            const btn = document.getElementById('theme-toggle');
+            
+            if (isDark) {
+                btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
+            } else {
+                btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+            }
+            
+            document.cookie = `theme=${isDark ? 'dark' : 'light'}; path=/; max-age=31536000`;
+        }
+
+        // Load theme from cookie
+        function loadTheme() {
+            const theme = document.cookie.split('; ').find(row => row.startsWith('theme='));
+            if (theme && theme.split('=')[1] === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.getElementById('theme-toggle').innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
+            }
+        }
+
+        loadTheme();
+    </script>
+</body>
+</html>
