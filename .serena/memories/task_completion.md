@@ -12,12 +12,31 @@
    - Codice inesistente: deve ricostruire l'indice ("Aggiornamento indice in corso...") e riprovare
    - La CLI mostra **solo i disegni il cui nome corrisponde**: i file trovati per nome della cartella (commessa) sono filtrati via, davano elenchi lunghi e inutili. La web app invece li mostra, contati a parte: **e' una divergenza voluta fra le due interfacce**
 
+## Prima di aggiungere un volume CIFS al docker-compose
+**Verificare l'accesso PRIMA di ricreare il container**: un volume che non monta impedisce
+l'avvio dell'**intero** container, non degrada solo quella fonte. Successo il 2026-08-06 con
+`Elaborati_Tecnici_OLD`: servizio giu' finche' non e' stato ripristinato il compose del backup.
+
+```bash
+ssh root@docker 'set -a; . /docker/apri_disegno_web/.env; set +a; \
+  smbclient "//srv03.liftingitalia.local/<share>" -U "$SAMBA_USER%$SAMBA_PASS" -c ls'
+```
+⚠️ **Non** diagnosticare i permessi leggendo `/etc/samba/smb.share.conf` su srv03: su queste share
+valgono le **ACL Synology**, e quel file resta invariato anche dopo una concessione andata a buon
+fine. Fa fede solo `smbclient`.
+
 ## Dopo modifiche al web (`apri_disegno_web/app.py`)
 1. Avvio locale e test di `/`, `/search` (termine valido, vuoto → 400, inesistente → 404), `/pdf/<path>` (fuori dai mount → 403), `/stats`
 2. Verificare che i percorsi mostrati siano UNC Windows (`\\srv01\...`) e che il pulsante copia funzioni anche su HTTP
 3. Verificare spinner, toggle light/dark, raggruppamento per cartella, evidenziazione termine, scorciatoie `/` ed `Esc`
 4. Controllare `elapsed_ms` in risposta: se non è nell'ordine dei millisecondi, l'indice non sta funzionando
 5. Build Docker e `docker compose up -d --build`; controllare i log e che i volumi CIFS siano montati read-only
+6. **Archivio storico** (`mem:archivio_storico_old`): `include_old=on` su un termine che sta solo
+   nell'archivio deve dare risultati, lo **stesso termine senza il flag deve dare 404**, un termine
+   generico (`arcate`) deve rispondere `total: 500` con `truncated` valorizzato. Su `/stats`
+   `elaborati_old` deve essere 558.013 circa, e resta 0 finché nessuno accende l'interruttore.
+   La prima ricerca costa ~5 s **per worker**: due attese lente sono normali, non un guasto.
+7. Controllare la memoria del container: con l'archivio caricato sale da 89 MB a **~640 MB**
 
 ## Dopo modifiche alla CLI: distribuire ai client
 La CLI **e'** aggiornabile (vedi [[client_linux_mint]]): commit + push, poi su ognuno dei 4 client

@@ -4,6 +4,9 @@ Richiesta di **Denis Sarzi Braga** (mail 2026-08-06): poter cercare anche in "el
 Marco ha risposto che sarebbe stato un **interruttore, spento di default**, per pesare meno sul
 server. Implementato **solo nella web app** — la CLI non e' stata toccata.
 
+**Stato: in produzione dal 2026-08-06**, commit `4ebc02b`, deploy verificato end-to-end
+(`/stats` → 558.013 voci). Interruttore visibile sotto la barra di ricerca, badge `OLD` viola.
+
 ## Perche' l'archivio va trattato diversamente
 `\\srv03\Elaborati_Tecnici_OLD` contiene **558.013 PDF** contro i 23.841 di elaborati_tecnici e
 i ~4.500 di DB_DISEGNI: **23 volte le due fonti correnti messe insieme**. Caricarlo come le altre
@@ -36,11 +39,45 @@ Ha vinto la lista di tuple: riusa `search_entries()` **senza una riga di codice 
 e mantiene `name_match` gratis. `build_et_entries` e' stato generalizzato in
 `build_cache_entries(base_path)`.
 
-## Numeri misurati
-- Prima ricerca (build indice): ~4 s da disco locale, di piu' da CIFS
-- Ricerche successive: 40-130 ms
-- Memoria: ~80 MB per worker gunicorn; essendo pigro **non e' condiviso via fork**, quindi con 2
-  worker sono ~160 MB. Il server docker ha 8 GB (4,9 liberi), il container stava a 89 MB.
+⚠️ **Gli 81 MB della tabella sono una sottostima**: in produzione sono risultati ~275 MB per
+worker, vedi la sezione "Numeri misurati IN PRODUZIONE" qui sotto. La *classifica* fra i tre
+metodi resta valida, i valori assoluti no.
+
+## Numeri misurati IN PRODUZIONE (2026-08-06, dopo il deploy)
+- Prima ricerca su un worker: **~4,9 s** (build dell'indice). Con 2 worker gunicorn e l'indice
+  pigro **non condiviso via fork**, capita **due volte**: la prima ricerca lenta su un worker non
+  evita quella sull'altro (osservato: 4,9 s e poi di nuovo 5,9 s su una ricerca diversa).
+- Ricerche successive: **57 ms**
+- Ricerca sulle fonti correnti: 1,6 ms (invariata)
+- **Memoria container: 89 MB → 640 MB** con l'archivio caricato su entrambi i worker.
+
+⚠️ **I 640 MB sono molto piu' degli ~80 MB per worker che il benchmark faceva prevedere** (~275 MB
+per worker). Il benchmark sottostimava per due motivi: memorizzava il **percorso relativo** mentre
+l'app salva quello **assoluto** (+35 caratteri per voce su 558.013 voci), e il picco di
+`splitlines()` su 60 MB di testo non viene restituito al sistema operativo dopo la build.
+Il server docker ha 8 GB e ne restano 4,4 liberi, quindi non e' un problema oggi — ma se servisse
+ridurre: costruire l'indice con un generatore invece di `splitlines()`, o memorizzare il percorso
+relativo e ricomporre quello assoluto solo sui risultati.
+
+## Permessi Samba: l'ostacolo del primo deploy (risolto il 2026-08-06)
+Il primo tentativo di deploy e' fallito: l'utente `prod` non aveva accesso alla share
+`Elaborati_Tecnici_OLD` (`tree connect failed: NT_STATUS_ACCESS_DENIED`, mount CIFS
+`permission denied`). Marco ha concesso il permesso da DSM e il mount e' passato.
+
+🪤 **Un volume CIFS che non monta impedisce l'avvio dell'INTERO container**, non degrada soltanto
+quella fonte: il servizio e' rimasto giu' finche' non e' stato ripristinato il compose del backup.
+Prima di aggiungere un volume nuovo, verificare sempre l'accesso con:
+```bash
+smbclient //srv03.liftingitalia.local/<share> -U prod%<pass> -c ls
+```
+
+🪤 **`smb.share.conf` non e' la fonte di verita' dei permessi su queste share.** Dopo la concessione
+l'accesso funzionava ma il file era **invariato** (`valid users=nobody,nobody`, mtime del 3 agosto):
+i permessi sono applicati via **ACL Synology**, non via `valid users`. Diagnosticare un accesso
+negato leggendo quel file porta a conclusioni sbagliate — verificare sempre con `smbclient`.
+
+🪤 Il tag di rollback in `mem:suggested_commands` era **sbagliato**: l'immagine in uso e'
+`apri_disegno_web-apri_disegno_web:latest` (nome generato da compose), non `apri_disegno_web:latest`.
 
 ## Altro
 - Volume CIFS `elaborati_tecnici_old` in docker-compose, `ro`, device
