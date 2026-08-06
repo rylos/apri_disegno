@@ -43,12 +43,12 @@ apri_disegno/
 ├── update_pdf_cache.sh      # Script cache lato srv03
 ├── etc/                     # fstab.add.txt + samba/credenziali
 ├── apri_disegno_web/        # App Flask (vedi memoria web_app)
-└── .cache_timestamp         # Auto-generato, escluso da git
+└── .pdf_index.json          # Indice PDF locale, auto-generato, escluso da git
 ```
 
 ## Installazione client (Linux Mint)
 - Repo: https://github.com/rylos/apri_disegno.git → `/home/prod/apri_disegno/`
-- `sudo ./install.sh` configura: mount CIFS, 3 icone desktop (Apri Disegno, MES Qualitas, Elaborati Tecnici), avvio automatico, wrapper di riavvio (100 ms), git pull giornaliero alle 6:00 via cron + anacron
+- `sudo ./install.sh` configura: mount CIFS, 3 icone desktop (Apri Disegno, MES Qualitas, Elaborati Tecnici), avvio automatico, wrapper di riavvio (100 ms), timer systemd per il git pull giornaliero
 - App persistente: terminale 195x59 in alto a sinistra, non chiudibile
 
 ## Client
