@@ -20,7 +20,7 @@ la propria chiave host SSH.
 |---|---|---|---|
 | pc-prod01 | 192.168.0.129 | 9c:c7:d3:b8:6a:9a | 12 core, 11 GB |
 | pc-prod02 | 192.168.1.163 | 24:eb:16:c6:5f:07 | 4 core, 15 GB |
-| prod04 | 192.168.1.131 | b8:f7:75:b8:00:56 | 4 core, 15 GB |
+| pc-prod04 | 192.168.1.131 | b8:f7:75:b8:00:56 | 4 core, 15 GB — rinominato da `prod04` il 2026-08-06 |
 | mes4 | 192.168.0.235 | 34:6f:24:54:4d:9b | 4 core, 7 GB — postazione MES, ha comunque il client |
 
 Tutti Linux Mint 22.2, Python 3.12.3, Cinnamon, schermo 1920x1080.
@@ -29,6 +29,7 @@ e non ha mai preso un lease.
 
 **Non esiste un prod03**: nessun lease, nessun host in rete, nessun hostname duplicato tra i quattro
 (gli unici nomi duplicati nei lease sono notebook con cavo+WiFi). La numerazione salta semplicemente il 3.
+Il nome nel lease Kea si allinea al rinnovo successivo (lease da 12 h) o al riavvio, non subito.
 
 I PC sono costruiti ripristinando un'**immagine Clonezilla** che contiene una release vecchia e
 configurazioni da correggere: procedura di allineamento in [[clonezilla_aggiornamento_client]].

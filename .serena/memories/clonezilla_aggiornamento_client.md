@@ -27,12 +27,17 @@ Contesto sul parco macchine, accessi e catena di avvio: [[client_linux_mint]].
 
 ### 1. Hostname univoco — farlo per primo
 ```bash
-sudo hostnamectl set-hostname pc-prodNN        # NN = numero libero, verificarlo prima
-sudo sed -i "s/\b<vecchio-nome>\b/pc-prodNN/g" /etc/hosts
+sudo hostnamectl set-hostname pc-prodNN
+sudo sed -i "s/^127\.0\.1\.1.*/127.0.1.1\t$(hostname)/" /etc/hosts
 ```
+**La seconda riga serve davvero**: l'immagine porta `127.0.1.1 pc-prod01` e `hostnamectl` non tocca
+`/etc/hosts`, quindi ogni clone si ritrova il nome della macchina di riferimento (rilevato e corretto
+su tre PC su quattro il 2026-08-06). Provoca warning di sudo e risoluzioni sbagliate del proprio nome.
+
 Verificare che il nome non sia già in uso: `cd ~/dev/dhcp-kea && ./kea-cmd.sh leases | grep -i prod`.
-Al 2026-08-06 esistono pc-prod01, pc-prod02, prod04, mes4 — **la numerazione salta il 3, prod03 non esiste**.
-Un clone che tiene il nome dell'originale crea due host con lo stesso nome su IP diversi.
+Convenzione: `pc-prodNN`. Esistono pc-prod01, pc-prod02, pc-prod04, mes4 — **la numerazione salta il 3,
+prod03 non esiste**. Un clone che tiene il nome dell'originale crea due host con lo stesso nome su IP diversi.
+Il nome nel lease DHCP si aggiorna al rinnovo successivo o al riavvio, non subito.
 
 ### 2. Rigenerare la chiave host SSH
 Lo fa già `install.sh` al passo 3, ma se serve a mano:
@@ -86,7 +91,7 @@ L'ultimo comando deve stampare una ricerca **in millisecondi**: se impiega più 
 non sta funzionando e il PC sta girando col codice vecchio.
 
 ## Quando conviene rifare l'immagine
-L'immagine attuale è antecedente al 2026-08-06. Rifarla dopo aver applicato questa procedura su una
+Prevista alla configurazione del prossimo pc-prodNN. L'immagine attuale è antecedente al 2026-08-06. Rifarla dopo aver applicato questa procedura su una
 macchina di riferimento **evita i punti 2, 3 e 4** ai cloni futuri. Prima della cattura:
 `sudo rm -f /etc/ssh/ssh_host_*`, `sudo touch /etc/ssh/.clonata` e `sudo truncate -s 0 /etc/machine-id`,
 così ogni clone se li rigenera al primo avvio invece di ereditarli identici.
