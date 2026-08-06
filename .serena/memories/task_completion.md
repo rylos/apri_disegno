@@ -10,7 +10,7 @@
    - Loop risultati elaborati_tecnici con opzione **R**
    - Indice: avvio ~2 s la prima volta, istantaneo se `.pdf_index.json` e' fresco; ricerche in millisecondi
    - Codice inesistente: deve ricostruire l'indice ("Aggiornamento indice in corso...") e riprovare
-   - Conteggio "Trovati N disegni (+M file in cartelle corrispondenti)" con i match di cartella attenuati in fondo
+   - La CLI mostra **solo i disegni il cui nome corrisponde**: i file trovati per nome della cartella (commessa) sono filtrati via, davano elenchi lunghi e inutili. La web app invece li mostra, contati a parte: **e' una divergenza voluta fra le due interfacce**
 
 ## Dopo modifiche al web (`apri_disegno_web/app.py`)
 1. Avvio locale e test di `/`, `/search` (termine valido, vuoto → 400, inesistente → 404), `/pdf/<path>` (fuori dai mount → 403), `/stats`

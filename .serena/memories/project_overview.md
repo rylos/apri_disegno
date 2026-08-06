@@ -51,6 +51,13 @@ apri_disegno/
 - `sudo ./install.sh` configura: mount CIFS, 3 icone desktop (Apri Disegno, MES Qualitas, Elaborati Tecnici), avvio automatico, wrapper di riavvio (100 ms), timer systemd per il git pull giornaliero
 - App persistente: terminale 195x59 in alto a sinistra, non chiudibile
 
+## Match per nome file vs per cartella
+Su elaborati_tecnici l'indice contiene il percorso relativo, quindi una ricerca prende anche i file
+contenuti in una cartella (commessa) il cui nome corrisponde. Le due interfacce si comportano
+**diversamente di proposito**:
+- **CLI**: li scarta, mostra solo i disegni il cui nome corrisponde (elenchi altrimenti ingestibili)
+- **Web**: li mostra in fondo, attenuati, con conteggio separato dai disegni veri
+
 ## Client
 Quattro postazioni Linux Mint eseguono la CLI: inventario, catena di avvio e aggiornamenti in
 [[client_linux_mint]].

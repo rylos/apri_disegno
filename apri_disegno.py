@@ -207,28 +207,15 @@ def supports_color() -> bool:
 
 
 def display_results(files: List[Tuple[Path, str, bool]]) -> None:
-    """Mostra i risultati numerati, distinguendo i disegni dai match di cartella"""
-    per_nome = sum(1 for _, _, name_match in files if name_match)
-    per_cartella = len(files) - per_nome
-
-    if per_nome:
-        intestazione = f"Trovati {per_nome} disegni"
-    else:
-        intestazione = "Nessun disegno con questo codice"
-
-    if per_cartella:
-        intestazione += f" (+{per_cartella} file in cartelle corrispondenti)"
-
-    print(f"\n{intestazione}:")
+    """Mostra i risultati numerati"""
+    print(f"\nTrovati {len(files)} disegni:")
     print("-" * 80)
 
     colori = supports_color()
 
-    for i, (file_path, filename, name_match) in enumerate(files, 1):
+    for i, (file_path, filename, _) in enumerate(files, 1):
         if colori:
-            if not name_match:
-                colore = "\033[2m"        # Attenuato: corrisponde la cartella, non il file
-            elif "/mnt/srv01/DB_DISEGNI" in str(file_path) or "DB_DISEGNI" in str(file_path):
+            if "DB_DISEGNI" in str(file_path):
                 colore = "\033[1;32m"     # Verde: DB_DISEGNI
             else:
                 colore = "\033[1;33m"     # Giallo: elaborati tecnici
@@ -257,8 +244,13 @@ def open_pdf(file_path: Path) -> bool:
 def cerca(base_path: Path, search_code: str) -> Tuple[List[Tuple[Path, str, bool]], bool]:
     """Esegue la ricerca sulle due fonti.
 
-    Se nessuna delle due da' risultati, ricostruisce l'indice e riprova una sola
-    volta: copre il caso del disegno pubblicato da pochi minuti.
+    Su elaborati_tecnici il testo indicizzato e' il percorso relativo, quindi la
+    ricerca prenderebbe anche tutti i file contenuti in una cartella (commessa)
+    il cui nome corrisponde: elenchi lunghi e inutili. Qui vengono tenuti solo i
+    file il cui NOME corrisponde davvero, cioe' i disegni veri.
+
+    Se nessuna delle due fonti da' risultati, ricostruisce l'indice e riprova una
+    sola volta: copre il caso del disegno pubblicato da pochi minuti.
     """
     for tentativo in (1, 2):
         index = get_index(base_path, force=(tentativo == 2))
@@ -267,7 +259,7 @@ def cerca(base_path: Path, search_code: str) -> Tuple[List[Tuple[Path, str, bool
         if risultati:
             return risultati, False
 
-        risultati = search_entries(index["et"], search_code)
+        risultati = [r for r in search_entries(index["et"], search_code) if r[2]]
         if risultati:
             return risultati, True
 
