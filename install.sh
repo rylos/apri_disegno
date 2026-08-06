@@ -69,8 +69,15 @@ chmod +x /home/prod/apri_disegno/apri_disegno.py
 # Crea wrapper per riavvio automatico
 cat > /home/prod/apri_disegno/apri_disegno_loop.sh << 'EOF'
 #!/bin/bash
+STAMP=/home/prod/apri_disegno/.last_pull
 while true; do
     cd /home/prod/apri_disegno
+    # Aggiorna il codice al massimo una volta ogni 4 ore: cosi' una nuova versione
+    # entra in funzione alla prima riapertura della finestra, non il giorno dopo.
+    if [ ! -f "$STAMP" ] || [ $(( $(date +%s) - $(stat -c %Y "$STAMP") )) -gt 14400 ]; then
+        timeout 20 git pull --quiet origin main >/dev/null 2>&1
+        touch "$STAMP"
+    fi
     gnome-terminal --geometry=195x59+0+0 --hide-menubar --wait -- python3 apri_disegno.py
     sleep 0.1
 done
@@ -145,21 +152,48 @@ if ! mount | grep -q "srv03.liftingitalia.local"; then
     mount /mnt/srv03/elaborati_tecnici 2>/dev/null || echo "Mount srv03 già presente o non disponibile"
 fi
 
-# Configura cron per aggiornamento giornaliero
+# Configura aggiornamento automatico (timer systemd utente)
+# NB: la vecchia configurazione usava /etc/anacrontab.d/, directory che anacron
+# NON legge: i PC accesi dopo le 6:00 non si aggiornavano mai. Il timer systemd
+# con Persistent=true recupera invece le esecuzioni perse al primo avvio utile.
 echo "Configurazione aggiornamento automatico..."
-if ! crontab -u prod -l 2>/dev/null | grep -q "git pull origin main"; then
-    (crontab -u prod -l 2>/dev/null; echo "0 6 * * * cd /home/prod/apri_disegno && git pull origin main >/dev/null 2>&1") | crontab -u prod -
-    echo "Cron job aggiunto"
-else
-    echo "Cron job già presente"
-fi
+PROD_UID=$(id -u prod)
+mkdir -p /home/prod/.config/systemd/user
 
-# Configura anacron per recupero se PC spento
-mkdir -p /etc/anacrontab.d
-cat > /etc/anacrontab.d/apri_disegno << 'EOF'
-1	5	apri_disegno_update	sudo -u prod bash -c "cd /home/prod/apri_disegno && git pull origin main >/dev/null 2>&1"
+cat > /home/prod/.config/systemd/user/apri-disegno-update.service << 'EOF'
+[Unit]
+Description=Aggiornamento apri_disegno da GitHub
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/prod/apri_disegno
+ExecStart=/usr/bin/timeout 120 /usr/bin/git pull --quiet origin main
 EOF
+
+cat > /home/prod/.config/systemd/user/apri-disegno-update.timer << 'EOF'
+[Unit]
+Description=Aggiornamento giornaliero apri_disegno
+
+[Timer]
+OnCalendar=*-*-* 06:00:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
+EOF
+
+chown -R prod:prod /home/prod/.config/systemd
+
+# Rimuove cron e anacron precedenti, sostituiti dal timer
+crontab -u prod -l 2>/dev/null | grep -v "apri_disegno && git pull" | crontab -u prod - 2>/dev/null
+rm -f /etc/anacrontab.d/apri_disegno
+
+sudo -u prod XDG_RUNTIME_DIR=/run/user/$PROD_UID systemctl --user daemon-reload 2>/dev/null
+sudo -u prod XDG_RUNTIME_DIR=/run/user/$PROD_UID systemctl --user enable --now apri-disegno-update.timer 2>/dev/null
+echo "Timer systemd attivo (recupera gli aggiornamenti persi a PC spento)"
 
 echo "=== Installazione completata ==="
 echo "Eseguire: cd /home/prod/apri_disegno && python3 apri_disegno.py"
-echo "Aggiornamento automatico: ogni giorno alle 6:00 (anacron se PC spento)"
+echo "Aggiornamento automatico: timer systemd alle 6:00, con recupero se il PC era spento"

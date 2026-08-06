@@ -6,14 +6,14 @@ Programma Python per ricerca e apertura rapida di disegni PDF da rete aziendale.
 
 - 🔍 **Doppia ricerca** per codice disegno (DB_DISEGNI + elaborati_tecnici)
 - 🔁 **Loop risultati** per elaborati_tecnici (opzione R per nuova ricerca)
-- 🚀 **Cache intelligente** con scadenza automatica (8 ore)
+- 🚀 **Indice in memoria**: ricerca istantanea, senza accessi di rete ripetuti
 - 🖥️ **Cross-platform** (Windows/Linux)
 - 📂 **Apertura automatica** con programma predefinito
 - 🎨 **Colori differenziati** per origine risultati (verde/giallo)
 - ⚡ **Zero dipendenze** (solo librerie standard Python)
 - 🔧 **Installazione automatica** Linux Mint con script
 - 🔄 **App persistente** con riavvio automatico se chiusa
-- 📅 **Aggiornamenti automatici** git pull giornalieri
+- 📅 **Aggiornamenti automatici** con recupero se il PC era spento (timer systemd)
 
 ## Installazione Linux Mint
 
@@ -49,20 +49,33 @@ Inserire codice disegno (es. `F353.01.0005` o `F353.01`) e selezionare il file d
 
 ## Performance
 
-- **Prima esecuzione**: Carica cache cartelle (~40 cartelle)
-- **Esecuzioni successive**: Utilizza cache per ricerca istantanea
-- **Aggiornamento automatico**: Cache si rinnova ogni 8 ore
+All'avvio l'app costruisce un indice di tutti i PDF e lo tiene in memoria: le
+ricerche successive non accedono piu' alla rete.
+
+| | Prima | Ora |
+|---|---|---|
+| Ricerca | 1,3 - 1,6 s | ~1 ms |
+
+- **Avvio**: ~2 s per indicizzare (~4.500 disegni + ~24.000 elaborati tecnici),
+  oppure istantaneo se l'indice su disco e' ancora valido
+- **Aggiornamento indice**: in background ogni 15 minuti, senza attese per l'utente
+- **Disegni appena pubblicati**: se una ricerca non trova nulla l'indice viene
+  ricostruito e la ricerca ripetuta, quindi un disegno nuovo si trova comunque
 
 ## Struttura
 
 ```
 apri_disegno/
 ├── apri_disegno.py      # Programma principale
+├── apri_disegno_web/    # Versione web (Flask + htmx)
 ├── update_pdf_cache.sh  # Script cache server srv03
+├── install.sh           # Installazione automatica Linux Mint
 ├── README.md            # Questa documentazione
-└── .cache_timestamp     # Cache timestamp (auto-generato)
+└── .pdf_index.json      # Indice PDF locale (auto-generato)
 ```
 
 ---
 
-**Version 1.2** - Loop risultati per elaborati_tecnici con opzione R per nuova ricerca.
+**Version 1.3** - Indice in memoria (ricerche ~1000x piu' rapide), conteggio dei
+disegni distinto dai file trovati per nome cartella, aggiornamenti automatici
+affidabili con timer systemd.
