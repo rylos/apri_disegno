@@ -4,109 +4,286 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ricerca Disegni PDF</title>
-    <link rel="icon" type="image/png" href="/static/favicon.png">
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <script src="{{ asset('htmx.min.js') }}" defer></script>
+    <link rel="stylesheet" href="{{ asset('style.css') }}">
 </head>
 <body>
+    <!-- Icone riutilizzate via <use> -->
+    <svg style="display:none" aria-hidden="true">
+        <symbol id="i-drawing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3h18v18H3z"></path><path d="M3 9h18"></path><path d="M9 21V9"></path><path d="M13 14l4 4"></path>
+        </symbol>
+        <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <path d="M14 2v6h6"></path><path d="M8 13h8"></path><path d="M8 17h5"></path>
+        </symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6L9 17l-5-5"></path>
+        </symbol>
+        <symbol id="i-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </symbol>
+        <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path>
+        </symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </symbol>
+    </svg>
+
     <div class="container">
         <div class="header">
             <div class="title-group">
-                <img src="/static/logo.svg" alt="AreaLifting" class="logo">
+                <img src="{{ asset('logo.svg') }}" alt="AreaLifting" class="logo">
                 <h1>Ricerca Disegni PDF</h1>
             </div>
-            <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                </svg>
+            <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Cambia tema">
+                <svg width="20" height="20"><use href="#i-moon"></use></svg>
             </button>
         </div>
-        
+
         <div class="legend">
             <span class="legend-item"><span class="color-box db"></span> DB_DISEGNI</span>
             <span class="legend-item"><span class="color-box et"></span> Elaborati Tecnici</span>
+            <span class="legend-item shortcuts"><kbd>/</kbd> cerca <kbd>Esc</kbd> pulisci</span>
         </div>
-        
+
         <form hx-post="/search" hx-target="#results" hx-swap="innerHTML" hx-indicator="#spinner">
-            <input type="text" 
-                   id="search-input"
-                   name="search_term" 
-                   placeholder="Inserire codice disegno (es. F353.01.0005, 250700)" 
-                   autofocus 
-                   required>
+            <div class="input-wrap">
+                <svg class="input-icon" width="18" height="18"><use href="#i-search"></use></svg>
+                <input type="text"
+                       id="search-input"
+                       name="search_term"
+                       placeholder="Inserire codice disegno (es. F353.01.0005, 250700)"
+                       autocomplete="off"
+                       autofocus
+                       required>
+            </div>
             <button type="submit">Cerca</button>
             <button type="button" onclick="resetSearch()" class="reset-btn" title="Pulisci ricerca">✕</button>
         </form>
-        
+
         <div id="spinner" class="htmx-indicator">
             <svg class="spinner" viewBox="0 0 50 50">
                 <circle cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
             </svg>
             <span class="spinner-text">Ricerca in corso...</span>
         </div>
-        
+
         <div id="results"></div>
+
+        <footer class="footer">
+            © 2025-2026 Marco Ziliani · v1.2
+        </footer>
     </div>
 
+    <div id="toast" class="toast"></div>
+
     <script>
+        let lastTerm = '';
+
         // Intercetta PRIMA che htmx inserisca il contenuto
         document.body.addEventListener('htmx:beforeSwap', function(evt) {
             if (evt.detail.xhr.status === 200) {
                 evt.preventDefault(); // Previene inserimento JSON raw
                 const data = JSON.parse(evt.detail.xhr.response);
-                renderResults(data.files);
+                renderResults(data);
             } else if (evt.detail.xhr.status === 404 || evt.detail.xhr.status === 400) {
                 evt.preventDefault();
                 const data = JSON.parse(evt.detail.xhr.response);
-                document.getElementById('results').innerHTML = 
-                    `<div class="error">${data.error}</div>`;
+                document.getElementById('results').innerHTML =
+                    `<div class="error">${escapeHtml(data.error)}</div>`;
             }
         });
 
-        function renderResults(files) {
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+            lastTerm = (evt.detail.parameters.search_term || '').trim();
+        });
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[c]);
+        }
+
+        // Taglia l'inizio del percorso mantenendo la coda (commessa + cartella finale).
+        // Fatto in JS e non con `direction: rtl`, che sposterebbe il prefisso UNC \\ in fondo.
+        function shortenPath(path, max = 78) {
+            return path.length <= max ? path : '…' + path.slice(path.length - max);
+        }
+
+        // Evidenzia il termine cercato nel nome file
+        function highlight(name, term) {
+            const safe = escapeHtml(name);
+            if (!term) return safe;
+
+            const idx = safe.toLowerCase().indexOf(escapeHtml(term).toLowerCase());
+            if (idx === -1) return safe;
+
+            const len = escapeHtml(term).length;
+            return safe.slice(0, idx) + '<mark>' + safe.slice(idx, idx + len) + '</mark>' + safe.slice(idx + len);
+        }
+
+        function renderResults(data) {
+            const files = data.files;
+            const term = lastTerm;
+
+            // Raggruppa per cartella mantenendo l'ordine di arrivo
+            const groups = new Map();
+            files.forEach(file => {
+                if (!groups.has(file.parent)) groups.set(file.parent, []);
+                groups.get(file.parent).push(file);
+            });
+
+            // Il conteggio "vero" sono i disegni il cui NOME corrisponde. Gli altri sono
+            // finiti nei risultati perché sta il termine nel nome della cartella (commessa).
+            const byName = files.filter(f => f.name_match).length;
+            const byFolder = files.length - byName;
+            const folderGroups = [...groups.values()].filter(items => !items.some(f => f.name_match)).length;
+
+            const count = byName === 1 ? '1 disegno trovato' : `${byName} disegni trovati`;
+            const noMatch = `nessun disegno con questo codice`;
+            const extra = byFolder
+                ? `<span class="count-extra" title="File che stanno in una cartella il cui nome corrisponde alla ricerca">`
+                  + `${byName ? '+ ' : ''}${byFolder} ${byFolder === 1 ? 'file' : 'file'} `
+                  + `in ${folderGroups === 1 ? 'una cartella corrispondente' : `${folderGroups} cartelle corrispondenti`}</span>`
+                : '';
+
+            const groupLabel = groups.size === 1 ? 'cartella' : 'cartelle';
+
             const html = `
-                <div class="results-header">Trovati ${files.length} file:</div>
-                <div class="results-list">
-                    ${files.map(file => `
-                        <div class="result-item ${file.source}">
-                            <a href="/pdf${file.path}" target="_blank">
-                                <span class="filename">${file.name}</span>
-                                <span class="path">${file.parent}</span>
-                            </a>
-                        </div>
-                    `).join('')}
+                <div class="results-header">
+                    <span class="count-group">
+                        <span class="count">${byName ? count : noMatch}</span>
+                        ${extra}
+                    </span>
+                    <span class="meta">${groups.size} ${groupLabel} · ${data.elapsed_ms} ms</span>
                 </div>
+                ${[...groups.entries()].map(([parent, items]) => `
+                    <div class="group">
+                        <div class="group-header">
+                            <svg class="group-icon" width="14" height="14"><use href="#i-folder"></use></svg>
+                            <span class="group-path" title="${escapeHtml(parent)}">${highlight(shortenPath(parent), term)}</span>
+                            ${items.some(f => f.name_match) ? '' :
+                                '<span class="group-tag" title="Nessun file corrisponde: la ricerca ha trovato il nome della cartella">solo cartella</span>'}
+                            <span class="group-count">${items.length}</span>
+                            <button class="copy-btn" type="button"
+                                    data-path="${escapeHtml(parent)}"
+                                    title="Copia percorso per Windows">
+                                <svg width="14" height="14"><use href="#i-copy"></use></svg>
+                            </button>
+                        </div>
+                        <div class="results-list">
+                            ${items.map(file => `
+                                <div class="result-item ${file.source}${file.name_match ? '' : ' by-folder'}"
+                                     ${file.name_match ? '' : 'title="Il nome file non corrisponde: si trova in una cartella corrispondente"'}>
+                                    <a href="/pdf${escapeHtml(file.path)}" target="_blank" rel="noopener">
+                                        <svg class="file-icon" width="18" height="18">
+                                            <use href="#${file.source === 'db_disegni' ? 'i-drawing' : 'i-doc'}"></use>
+                                        </svg>
+                                        <span class="filename">${highlight(file.name, term)}</span>
+                                        <span class="badge ${file.source}">${file.source === 'db_disegni' ? 'DB' : 'ET'}</span>
+                                    </a>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('')}
             `;
+
             document.getElementById('results').innerHTML = html;
         }
 
-        // Theme toggle
+        // Delegazione: evita di iniettare percorsi Windows (backslash) negli attributi onclick
+        document.getElementById('results').addEventListener('click', function(evt) {
+            const btn = evt.target.closest('.copy-btn');
+            if (btn) copyPath(btn, btn.dataset.path);
+        });
+
+        function copyPath(btn, path) {
+            const done = () => {
+                const original = btn.innerHTML;
+                btn.innerHTML = '<svg width="14" height="14"><use href="#i-check"></use></svg>';
+                btn.classList.add('copied');
+                showToast('Percorso copiato');
+                setTimeout(() => {
+                    btn.innerHTML = original;
+                    btn.classList.remove('copied');
+                }, 1500);
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(path).then(done);
+            } else {
+                // Fallback per HTTP in LAN (clipboard API non disponibile)
+                const ta = document.createElement('textarea');
+                ta.value = path;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                done();
+            }
+        }
+
+        let toastTimer;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('visible');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('visible'), 1800);
+        }
+
         function resetSearch() {
             document.getElementById('search-input').value = '';
             document.getElementById('results').innerHTML = '';
             document.getElementById('search-input').focus();
         }
 
-        function toggleTheme() {
-            const body = document.body;
-            const isDark = body.classList.toggle('dark-theme');
-            const btn = document.getElementById('theme-toggle');
-            
-            if (isDark) {
-                btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
-            } else {
-                btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+        // Scorciatoie: "/" per cercare, "Esc" per pulire
+        document.addEventListener('keydown', function(evt) {
+            const input = document.getElementById('search-input');
+
+            if (evt.key === '/' && document.activeElement !== input) {
+                evt.preventDefault();
+                input.focus();
+                input.select();
+            } else if (evt.key === 'Escape') {
+                resetSearch();
             }
-            
+        });
+
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-theme');
+            setThemeIcon(isDark);
             document.cookie = `theme=${isDark ? 'dark' : 'light'}; path=/; max-age=31536000`;
         }
 
-        // Load theme from cookie
+        function setThemeIcon(isDark) {
+            document.getElementById('theme-toggle').innerHTML =
+                `<svg width="20" height="20"><use href="#${isDark ? 'i-sun' : 'i-moon'}"></use></svg>`;
+        }
+
         function loadTheme() {
             const theme = document.cookie.split('; ').find(row => row.startsWith('theme='));
             if (theme && theme.split('=')[1] === 'dark') {
                 document.body.classList.add('dark-theme');
-                document.getElementById('theme-toggle').innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
+                setThemeIcon(true);
             }
         }
 
