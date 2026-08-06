@@ -1,4 +1,8 @@
-# App Web - apri_disegno_web (v1.2)
+# App Web - apri_disegno_web (v1.4)
+
+> Dal 2026-08-06 esiste una terza fonte opzionale, l'archivio storico
+> `Elaborati_Tecnici_OLD`, con un indice separato e regole proprie: `mem:archivio_storico_old`.
+> Endpoint `/search` accetta `include_old` e restituisce anche `truncated`.
 
 ## Stack
 - **Backend**: Flask 3.0.0 + Gunicorn 21.2.0 (2 worker, timeout 120 s, **`--preload`**), porta 5000

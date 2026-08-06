@@ -18,6 +18,10 @@
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <path d="M14 2v6h6"></path><path d="M8 13h8"></path><path d="M8 17h5"></path>
         </symbol>
+        <symbol id="i-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="5" rx="1"></rect>
+            <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"></path><path d="M10 12h4"></path>
+        </symbol>
         <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -57,10 +61,13 @@
         <div class="legend">
             <span class="legend-item"><span class="color-box db"></span> DB_DISEGNI</span>
             <span class="legend-item"><span class="color-box et"></span> Elaborati Tecnici</span>
+            <span class="legend-item"><span class="color-box old"></span> Archivio storico</span>
             <span class="legend-item shortcuts"><kbd>/</kbd> cerca <kbd>Esc</kbd> pulisci</span>
         </div>
 
-        <form hx-post="/search" hx-target="#results" hx-swap="innerHTML" hx-indicator="#spinner">
+        <!-- hx-include: la checkbox sta fuori dal form per non spezzarne il layout -->
+        <form hx-post="/search" hx-target="#results" hx-swap="innerHTML" hx-indicator="#spinner"
+              hx-include="#include-old">
             <div class="input-wrap">
                 <svg class="input-icon" width="18" height="18"><use href="#i-search"></use></svg>
                 <input type="text"
@@ -75,6 +82,12 @@
             <button type="button" onclick="resetSearch()" class="reset-btn" title="Pulisci ricerca">✕</button>
         </form>
 
+        <label class="old-toggle" title="Cerca anche in Elaborati_Tecnici_OLD, solo quando le altre due fonti non trovano nulla. La prima ricerca richiede qualche secondo.">
+            <input type="checkbox" id="include-old" name="include_old" onchange="saveOldPref()">
+            <span>Cerca anche nell'archivio storico</span>
+            <span class="old-hint">558.000 disegni · prima ricerca piu' lenta</span>
+        </label>
+
         <div id="spinner" class="htmx-indicator">
             <svg class="spinner" viewBox="0 0 50 50">
                 <circle cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
@@ -85,7 +98,7 @@
         <div id="results"></div>
 
         <footer class="footer">
-            © 2025-2026 Marco Ziliani · v1.2
+            © 2025-2026 Marco Ziliani · v1.4
         </footer>
     </div>
 
@@ -163,14 +176,24 @@
 
             const groupLabel = groups.size === 1 ? 'cartella' : 'cartelle';
 
+            const fromOld = files.length && files[0].source === 'elaborati_old';
+            const origin = fromOld
+                ? `<span class="origin-note">Risultati dall'archivio storico: nelle fonti correnti non c'è nulla</span>`
+                : '';
+            const cut = data.truncated
+                ? `<div class="truncated">Mostrati i primi ${files.length} risultati, altri ${data.truncated} esclusi. Restringi la ricerca.</div>`
+                : '';
+
             const html = `
                 <div class="results-header">
                     <span class="count-group">
                         <span class="count">${byName ? count : noMatch}</span>
                         ${extra}
+                        ${origin}
                     </span>
                     <span class="meta">${groups.size} ${groupLabel} · ${data.elapsed_ms} ms</span>
                 </div>
+                ${cut}
                 ${[...groups.entries()].map(([parent, items]) => `
                     <div class="group">
                         <div class="group-header">
@@ -191,10 +214,13 @@
                                      ${file.name_match ? '' : 'title="Il nome file non corrisponde: si trova in una cartella corrispondente"'}>
                                     <a href="/pdf${escapeHtml(file.path)}" target="_blank" rel="noopener">
                                         <svg class="file-icon" width="18" height="18">
-                                            <use href="#${file.source === 'db_disegni' ? 'i-drawing' : 'i-doc'}"></use>
+                                            <use href="#${file.source === 'db_disegni' ? 'i-drawing' :
+                                                          file.source === 'elaborati_old' ? 'i-archive' : 'i-doc'}"></use>
                                         </svg>
                                         <span class="filename">${highlight(file.name, term)}</span>
-                                        <span class="badge ${file.source}">${file.source === 'db_disegni' ? 'DB' : 'ET'}</span>
+                                        <span class="badge ${file.source}">${
+                                            file.source === 'db_disegni' ? 'DB' :
+                                            file.source === 'elaborati_old' ? 'OLD' : 'ET'}</span>
                                     </a>
                                 </div>
                             `).join('')}
@@ -287,7 +313,22 @@
             }
         }
 
+        // Preferenza "archivio storico", ricordata come il tema. Default spenta:
+        // l'indice dell'archivio non viene costruito finche' nessuno lo chiede.
+        function saveOldPref() {
+            const on = document.getElementById('include-old').checked;
+            document.cookie = `include_old=${on ? '1' : '0'}; path=/; max-age=31536000`;
+        }
+
+        function loadOldPref() {
+            const pref = document.cookie.split('; ').find(row => row.startsWith('include_old='));
+            if (pref && pref.split('=')[1] === '1') {
+                document.getElementById('include-old').checked = true;
+            }
+        }
+
         loadTheme();
+        loadOldPref();
     </script>
 </body>
 </html>

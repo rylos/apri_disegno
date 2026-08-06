@@ -21,14 +21,24 @@ from flask import Flask, render_template, request, send_file, jsonify
 app = Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 86400  # cache static 1 giorno
 
-DB_DISEGNI = Path("/mnt/srv01/DB_DISEGNI")
-ELABORATI_TECNICI = Path("/mnt/srv03/elaborati_tecnici")
+DB_DISEGNI = Path(os.environ.get("DB_DISEGNI", "/mnt/srv01/DB_DISEGNI"))
+ELABORATI_TECNICI = Path(os.environ.get("ELABORATI_TECNICI", "/mnt/srv03/elaborati_tecnici"))
+ELABORATI_OLD = Path(os.environ.get("ELABORATI_OLD", "/mnt/srv03/elaborati_tecnici_old"))
 CACHE_DURATION = 28800  # 8 ore
+
+# L'archivio storico non viene piu' modificato: TTL lungo, e l'indice si costruisce
+# solo alla prima ricerca che lo richiede (~558.000 voci, ~80 MB per worker).
+OLD_CACHE_DURATION = 86400  # 24 ore
+# Su un archivio cosi' grande un termine generico puo' restituire centinaia di
+# migliaia di righe (misurato: "cabine" ne da' 336.185): senza tetto la risposta
+# JSON sarebbe da decine di MB.
+OLD_MAX_RESULTS = 500
 
 # Percorsi mostrati agli utenti Windows (i mount interni non sono utilizzabili)
 WIN_ROOTS: List[Tuple[Path, str]] = [
     (DB_DISEGNI, os.environ.get("WIN_DB_DISEGNI", r"\\srv01\DB_DISEGNI")),
     (ELABORATI_TECNICI, os.environ.get("WIN_ELABORATI_TECNICI", r"\\srv03\elaborati_tecnici")),
+    (ELABORATI_OLD, os.environ.get("WIN_ELABORATI_OLD", r"\\srv03\Elaborati_Tecnici_OLD")),
 ]
 
 # Indice persistito su disco: i worker Gunicorn ripartono a caldo dopo un restart
@@ -38,6 +48,12 @@ INDEX_FILE = Path(os.environ.get("INDEX_FILE", "/tmp/apri_disegno_index.json"))
 _index: Dict[str, object] = {"db": [], "et": [], "built_at": 0.0}
 _index_lock = threading.Lock()
 _rebuilding = False
+
+# Indice dell'archivio storico, tenuto separato: e' 23 volte piu' grande degli altri
+# due messi insieme, non viene persistito su disco e non esiste finche' qualcuno non
+# accende la ricerca nell'archivio.
+_old_index: Dict[str, object] = {"old": [], "built_at": 0.0}
+_old_lock = threading.Lock()
 
 
 # ---------------------------------------------------------------- costruzione
@@ -76,22 +92,31 @@ def build_db_entries() -> List[Tuple[str, str, str]]:
     return entries
 
 
-def build_et_entries() -> List[Tuple[str, str, str]]:
-    """Indicizza elaborati_tecnici leggendo la cache generata su srv03"""
+def build_cache_entries(base_path: Path) -> List[Tuple[str, str, str]]:
+    """Indicizza una share leggendo la cache .pdf_cache.txt generata su srv03.
+
+    Il testo ricercabile e' il percorso relativo, non il solo nome file: e' cosi'
+    che la ricerca per commessa trova i disegni di una cartella corrispondente.
+    """
     entries = []
-    cache_file = ELABORATI_TECNICI / ".pdf_cache.txt"
+    cache_file = base_path / ".pdf_cache.txt"
 
     try:
         if cache_file.exists():
             for line in cache_file.read_text(errors="replace").splitlines():
                 line = line.strip()
                 if line:
-                    full_path = ELABORATI_TECNICI / line
+                    full_path = base_path / line
                     entries.append((full_path.name, line.lower(), str(full_path)))
     except (OSError, PermissionError):
         pass
 
     return entries
+
+
+def build_et_entries() -> List[Tuple[str, str, str]]:
+    """Indicizza elaborati_tecnici"""
+    return build_cache_entries(ELABORATI_TECNICI)
 
 
 def build_index() -> Dict[str, object]:
@@ -155,6 +180,27 @@ def get_index() -> Dict[str, object]:
             threading.Thread(target=_rebuild_async, daemon=True).start()
 
     return index
+
+
+def get_old_index() -> List[Tuple[str, str, str]]:
+    """Indice dell'archivio storico, costruito alla prima richiesta e poi tenuto.
+
+    A differenza dell'indice principale la costruzione e' sincrona: qui non c'e' un
+    indice vecchio da restituire nel frattempo, e chi ha acceso la ricerca
+    nell'archivio si aspetta il risultato. Costa qualche secondo la prima volta
+    (lettura di ~60 MB di cache da CIFS), poi e' in memoria per 24 ore.
+    """
+    with _old_lock:
+        entries = _old_index["old"]
+        fresh = (time.time() - _old_index["built_at"]) < OLD_CACHE_DURATION
+
+        if entries and fresh:
+            return entries
+
+        _old_index["old"] = build_cache_entries(ELABORATI_OLD)
+        _old_index["built_at"] = time.time()
+
+        return _old_index["old"]
 
 
 # ------------------------------------------------------------------- ricerca
@@ -236,6 +282,7 @@ def search():
     """Endpoint ricerca"""
     started = time.perf_counter()
     search_term = request.form.get('search_term', '').strip()
+    include_old = request.form.get('include_old') in ('1', 'on', 'true')
 
     if not search_term:
         return jsonify({'error': 'Inserire codice disegno'}), 400
@@ -243,10 +290,18 @@ def search():
     search_lower = search_term.lower()
     idx = get_index()
 
-    # Ricerca DB_DISEGNI, fallback su elaborati_tecnici solo se nessun risultato
+    # Cascata: elaborati_tecnici solo se DB_DISEGNI e' a zero, archivio storico
+    # solo se anche elaborati_tecnici e' a zero e l'utente lo ha richiesto
     results = search_entries(idx["db"], search_lower, "db_disegni")
     if not results:
         results = search_entries(idx["et"], search_lower, "elaborati_tecnici")
+
+    truncated = 0
+    if not results and include_old:
+        results = search_entries(get_old_index(), search_lower, "elaborati_old")
+        if len(results) > OLD_MAX_RESULTS:
+            truncated = len(results) - OLD_MAX_RESULTS
+            results = results[:OLD_MAX_RESULTS]
 
     if not results:
         return jsonify({'error': 'Nessun file trovato'}), 404
@@ -259,6 +314,7 @@ def search():
     return jsonify({
         'files': results,
         'total': len(results),
+        'truncated': truncated,
         'elapsed_ms': round((time.perf_counter() - started) * 1000, 1),
     })
 
@@ -283,9 +339,15 @@ def stats():
     idx = get_index()
     age = time.time() - idx["built_at"]
 
+    with _old_lock:
+        old_count = len(_old_index["old"])
+        old_age = time.time() - _old_index["built_at"] if old_count else None
+
     return jsonify({
         'db_disegni': len(idx["db"]),
         'elaborati_tecnici': len(idx["et"]),
+        'elaborati_old': old_count,
+        'elaborati_old_age_seconds': round(old_age) if old_age is not None else None,
         'age_seconds': round(age),
         'rebuilding': _rebuilding,
     })

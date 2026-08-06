@@ -11,10 +11,11 @@ Web app per ricerca e visualizzazione disegni PDF da rete aziendale.
 
 ## Funzionalità
 
-- 🔍 Ricerca doppia: DB_DISEGNI → elaborati_tecnici
+- 🔍 Ricerca a cascata: DB_DISEGNI → elaborati_tecnici → archivio storico (opzionale)
 - ⚡ Indice completo in memoria: ricerca in pochi ms, la rete non viene toccata
 - 🪟 Percorsi mostrati in formato UNC Windows (`\\srv01\DB_DISEGNI\...`), copiabili con un click
-- 🗂️ Risultati raggruppati per cartella, con icone e badge origine (DB / ET)
+- 🗂️ Risultati raggruppati per cartella, con icone e badge origine (DB / ET / OLD)
+- 🗄️ Archivio storico `Elaborati_Tecnici_OLD` attivabile con un interruttore (default spento)
 - ✨ Evidenziazione del termine cercato nel nome file
 - ⌨️ Scorciatoie: `/` per cercare, `Esc` per pulire
 - 🎨 Theme switcher Tokyo Night (Light/Dark)
@@ -48,6 +49,7 @@ Variabili opzionali (valori di default):
 ```
 WIN_DB_DISEGNI=\\srv01\DB_DISEGNI
 WIN_ELABORATI_TECNICI=\\srv03\elaborati_tecnici
+WIN_ELABORATI_OLD=\\srv03\Elaborati_Tecnici_OLD
 INDEX_FILE=/tmp/apri_disegno_index.json
 ```
 
@@ -122,6 +124,30 @@ in memoria: le ricerche non accedono più alla rete.
 
 Stato dell'indice consultabile su `/stats`.
 
+## Archivio storico (Elaborati_Tecnici_OLD)
+
+La share `Elaborati_Tecnici_OLD` contiene **558.000 PDF**, 23 volte le due fonti correnti
+messe insieme. Per non farla pesare su chi non la usa:
+
+- **Interruttore in interfaccia**, spento di default, ricordato per utente in un cookie
+  (`include_old`) come il tema
+- **Terzo livello della cascata**: viene interrogata solo quando DB_DISEGNI *e*
+  elaborati_tecnici non trovano nulla
+- **Indice pigro**: costruito alla prima ricerca che lo richiede, non all'avvio. Se nessuno
+  accende l'interruttore, il server non paga niente
+- **TTL 24 h** (contro le 8 h dell'indice principale): è un archivio, non cambia
+- **Non persistito su disco**: si ricostruisce leggendo `.pdf_cache.txt`, il JSON sarebbe da oltre 100 MB
+- **Tetto di 500 risultati** (`OLD_MAX_RESULTS`): su un archivio così grande un termine generico
+  ne restituisce centinaia di migliaia (`arcate` → 64.814). Oltre il tetto l'interfaccia
+  segnala quanti risultati sono stati esclusi
+
+| | valore misurato |
+|---|---|
+| Voci indicizzate | 558.013 |
+| Memoria per worker | ~80 MB |
+| Prima ricerca (build indice) | ~4 s da disco locale, di più da CIFS |
+| Ricerche successive | 40 – 130 ms |
+
 ## Requisiti server
 
 - Docker + cifs-utils
@@ -130,5 +156,5 @@ Stato dell'indice consultabile su `/stats`.
 
 ---
 
-**Version 1.2** - Indice in memoria, percorsi UNC Windows, risultati raggruppati con icone
+**Version 1.4** - Archivio storico opzionale, indice in memoria, percorsi UNC Windows, risultati raggruppati con icone
 

@@ -9,6 +9,7 @@ services:
     volumes:
       - db_disegni:/mnt/srv01/DB_DISEGNI:ro
       - elaborati_tecnici:/mnt/srv03/elaborati_tecnici:ro
+      - elaborati_tecnici_old:/mnt/srv03/elaborati_tecnici_old:ro
     restart: unless-stopped
     environment:
       - TZ=Europe/Rome
@@ -27,4 +28,12 @@ volumes:
       type: cifs
       o: "username=${SAMBA_USER},password=${SAMBA_PASS},uid=1000,gid=1000,iocharset=utf8"
       device: "//srv03.liftingitalia.local/elaborati_tecnici"
+
+  # Archivio storico: usato solo dalle ricerche con "archivio storico" acceso
+  elaborati_tecnici_old:
+    driver: local
+    driver_opts:
+      type: cifs
+      o: "username=${SAMBA_USER},password=${SAMBA_PASS},uid=1000,gid=1000,iocharset=utf8"
+      device: "//srv03.liftingitalia.local/Elaborati_Tecnici_OLD"
 

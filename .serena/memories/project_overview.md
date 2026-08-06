@@ -1,9 +1,11 @@
-# Progetto apri_disegno - v1.3
+# Progetto apri_disegno - v1.4 (web) / v1.3 (CLI)
 
 ## Scopo
-Ricerca e apertura rapida di disegni PDF su rete aziendale, con due fonti:
+Ricerca e apertura rapida di disegni PDF su rete aziendale, con tre fonti:
 - **Primaria**: `srv01/DB_DISEGNI` (scansione diretta cartelle + cache)
 - **Secondaria**: `srv03/elaborati_tecnici` (ricerca su file cache `.pdf_cache.txt`)
+- **Terziaria, solo web e su richiesta**: `srv03/Elaborati_Tecnici_OLD`, 558.000 PDF,
+  interruttore spento di default → `mem:archivio_storico_old`
 
 Due applicazioni indipendenti che condividono la stessa logica di ricerca:
 1. **CLI** — `apri_disegno.py` (zero dipendenze, cross-platform)
@@ -27,6 +29,8 @@ in memoria** e cercano li'. Misurato: CLI 1,3-1,6 s -> ~1 ms, web 0,7-1,1 s -> ~
 - `elaborati_tecnici`: cache testuale `.pdf_cache.txt` generata lato server srv03 da
   `update_pdf_cache.sh` (richiede `fd`; esclude snapshot, `@eaDir`, `#recycle`; solo PDF
   modificati nell'ultimo anno). Ora letta una volta e tenuta in memoria, non ad ogni ricerca.
+  Dal 2026-08-06 lo stesso script genera anche la cache dell'archivio storico ed e' stato
+  riscritto a passata singola con scrittura atomica → `mem:cache_pdf_srv03`.
 
 ## Percorsi
 - Linux: `/mnt/srv01/DB_DISEGNI`, `/mnt/srv03/elaborati_tecnici` (mount CIFS)
@@ -61,6 +65,11 @@ contenuti in una cartella (commessa) il cui nome corrisponde. Le due interfacce 
 ## Client
 Quattro postazioni Linux Mint eseguono la CLI: inventario, catena di avvio e aggiornamenti in
 [[client_linux_mint]].
+
+## Novità v1.4 (solo web)
+Ricerca opzionale nell'archivio storico `Elaborati_Tecnici_OLD` (interruttore per utente, spento
+di default, terzo livello della cascata, tetto di 500 risultati) e riscrittura dello script di
+cache su srv03.
 
 ## Novità v1.3
 Indice in memoria su CLI e web; conteggio dei disegni distinto dai file trovati per nome cartella;

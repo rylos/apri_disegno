@@ -707,3 +707,119 @@ body.dark-theme .spinner circle {
 body.dark-theme .spinner-text {
     color: #c0caf5;
 }
+
+/* ---------------------------------------------- Archivio storico (OLD) */
+/* Viola Tokyo Night: si distingue dal verde DB_DISEGNI e dall'ocra elaborati tecnici */
+
+.color-box.old {
+    background: #5f4b8b;
+}
+
+.old-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: -6px 0 18px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #565a6e;
+    background: #f6f5fb;
+    border: 1px solid #e3e0ef;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.old-toggle:hover {
+    border-color: #c9c2e3;
+}
+
+.old-toggle input {
+    accent-color: #5f4b8b;
+    cursor: pointer;
+    margin: 0;
+}
+
+.old-hint {
+    margin-left: auto;
+    font-size: 11px;
+    color: #8a8fa3;
+    white-space: nowrap;
+}
+
+.origin-note {
+    font-size: 12px;
+    color: #5f4b8b;
+    border: 1px solid #cfc6e6;
+    border-radius: 10px;
+    padding: 1px 9px;
+    white-space: nowrap;
+}
+
+.truncated {
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #8f5e15;
+    background: #fdf6e3;
+    border: 1px solid #e2cf9f;
+    border-radius: 6px;
+}
+
+.result-item.elaborati_old {
+    border-left-color: #5f4b8b;
+}
+
+.result-item.elaborati_old .file-icon {
+    color: #5f4b8b;
+}
+
+.badge.elaborati_old {
+    background: #5f4b8b;
+}
+
+body.dark-theme .color-box.old {
+    background: #9d7cd8;
+}
+
+body.dark-theme .old-toggle {
+    background: #1a1b26;
+    border-color: #414868;
+    color: #9aa5ce;
+}
+
+body.dark-theme .old-toggle:hover {
+    border-color: #565f89;
+}
+
+body.dark-theme .old-toggle input {
+    accent-color: #9d7cd8;
+}
+
+body.dark-theme .old-hint {
+    color: #565f89;
+}
+
+body.dark-theme .origin-note {
+    color: #9d7cd8;
+    border-color: #4a3d6b;
+}
+
+body.dark-theme .truncated {
+    color: #e0af68;
+    background: #2a2618;
+    border-color: #6b5426;
+}
+
+body.dark-theme .result-item.elaborati_old {
+    border-left-color: #9d7cd8;
+}
+
+body.dark-theme .result-item.elaborati_old .file-icon {
+    color: #9d7cd8;
+}
+
+body.dark-theme .badge.elaborati_old {
+    background: #9d7cd8;
+    color: #1a1b26;
+}
