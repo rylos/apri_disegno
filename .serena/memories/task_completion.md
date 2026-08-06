@@ -8,7 +8,9 @@
    - Apertura PDF da entrambe le fonti
    - Colori corretti (verde DB_DISEGNI / giallo elaborati_tecnici)
    - Loop risultati elaborati_tecnici con opzione **R**
-   - Cache: prima esecuzione lenta (~1 s), successive <100 ms; verificare `.cache_timestamp`
+   - Indice: avvio ~2 s la prima volta, istantaneo se `.pdf_index.json` e' fresco; ricerche in millisecondi
+   - Codice inesistente: deve ricostruire l'indice ("Aggiornamento indice in corso...") e riprovare
+   - Conteggio "Trovati N disegni (+M file in cartelle corrispondenti)" con i match di cartella attenuati in fondo
 
 ## Dopo modifiche al web (`apri_disegno_web/app.py`)
 1. Avvio locale e test di `/`, `/search` (termine valido, vuoto → 400, inesistente → 404), `/pdf/<path>` (fuori dai mount → 403), `/stats`
@@ -17,8 +19,15 @@
 4. Controllare `elapsed_ms` in risposta: se non è nell'ordine dei millisecondi, l'indice non sta funzionando
 5. Build Docker e `docker compose up -d --build`; controllare i log e che i volumi CIFS siano montati read-only
 
+## Dopo modifiche alla CLI: distribuire ai client
+La CLI **e'** aggiornabile (vedi [[client_linux_mint]]): commit + push, poi su ognuno dei 4 client
+`git pull` e `pkill -f "python3 apri_disegno.py"` (il wrapper riapre la finestra in 100 ms col codice
+nuovo). Senza il pkill il processo in esecuzione resta alla versione vecchia.
+Verificare sempre tutti e quattro: fino al 2026-08-06 il canale automatico era rotto e un client
+era rimasto indietro di 5 mesi.
+
 ## Sempre
-- **La CLI non si tocca**: i client Linux Mint non sono aggiornabili. Le due implementazioni sono ormai divergenti (la web usa un indice completo in memoria), ma il *comportamento* di ricerca deve restare equivalente: stessa regex cartelle, match substring case-insensitive, fallback su elaborati_tecnici solo a 0 risultati
+- La CLI gira in produzione su 4 postazioni: le modifiche vanno testate sul campo prima del rollout Le due implementazioni sono ormai divergenti (la web usa un indice completo in memoria), ma il *comportamento* di ricerca deve restare equivalente: stessa regex cartelle, match substring case-insensitive, fallback su elaborati_tecnici solo a 0 risultati
 - Aggiornare `README.md` (e `apri_disegno_web/README.md`) se cambiano funzionalità o versione
 - `git status && git diff` prima del commit; messaggio descrittivo in italiano
 

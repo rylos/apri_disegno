@@ -1,4 +1,4 @@
-# Progetto apri_disegno - v1.2
+# Progetto apri_disegno - v1.3
 
 ## Scopo
 Ricerca e apertura rapida di disegni PDF su rete aziendale, con due fonti:
@@ -15,11 +15,18 @@ Due applicazioni indipendenti che condividono la stessa logica di ricerca:
 3. Solo se DB_DISEGNI restituisce 0 risultati → ricerca in `elaborati_tecnici` leggendo `.pdf_cache.txt`
 4. Risultati ordinati per nome, con origine differenziata (verde = DB_DISEGNI, giallo = elaborati_tecnici)
 
-## Cache
-- Cartelle valide DB_DISEGNI in cache globale in memoria, TTL 8 ore (28800 s)
-- CLI: timestamp persistito su file `.cache_timestamp` (sopravvive ai riavvii)
-- Web: cache solo in memoria di processo
-- `elaborati_tecnici`: cache testuale `.pdf_cache.txt` generata lato server srv03 da `update_pdf_cache.sh` (richiede `fd`; esclude snapshot, `@eaDir`, `#recycle`; solo PDF modificati nell'ultimo anno)
+## Indice (entrambe le applicazioni, dal 2026-08-06)
+Nessuna delle due fa piu' accessi di rete ad ogni ricerca: costruiscono un **indice completo dei PDF
+in memoria** e cercano li'. Misurato: CLI 1,3-1,6 s -> ~1 ms, web 0,7-1,1 s -> ~3 ms.
+
+- **CLI**: TTL 15 minuti, refresh in background; indice persistito in `.pdf_index.json` cosi' la
+  riapertura della finestra e' istantanea. Se una ricerca non trova nulla l'indice viene ricostruito
+  e la ricerca ripetuta una volta: **serve a non nascondere i disegni appena pubblicati**, ed e' il
+  motivo per cui il TTL e' corto. Non allungarlo senza tenere conto di questo.
+- **Web**: TTL 8 ore, refresh in background, indice su disco + `gunicorn --preload` (vedi [[web_app]])
+- `elaborati_tecnici`: cache testuale `.pdf_cache.txt` generata lato server srv03 da
+  `update_pdf_cache.sh` (richiede `fd`; esclude snapshot, `@eaDir`, `#recycle`; solo PDF
+  modificati nell'ultimo anno). Ora letta una volta e tenuta in memoria, non ad ogni ricerca.
 
 ## Percorsi
 - Linux: `/mnt/srv01/DB_DISEGNI`, `/mnt/srv03/elaborati_tecnici` (mount CIFS)
@@ -43,6 +50,15 @@ apri_disegno/
 - Repo: https://github.com/rylos/apri_disegno.git → `/home/prod/apri_disegno/`
 - `sudo ./install.sh` configura: mount CIFS, 3 icone desktop (Apri Disegno, MES Qualitas, Elaborati Tecnici), avvio automatico, wrapper di riavvio (100 ms), git pull giornaliero alle 6:00 via cron + anacron
 - App persistente: terminale 195x59 in alto a sinistra, non chiudibile
+
+## Client
+Quattro postazioni Linux Mint eseguono la CLI: inventario, catena di avvio e aggiornamenti in
+[[client_linux_mint]].
+
+## Novità v1.3
+Indice in memoria su CLI e web; conteggio dei disegni distinto dai file trovati per nome cartella;
+aggiornamento automatico dei client riparato (timer systemd al posto di un anacron che non era
+mai stato funzionante).
 
 ## Novità v1.2
 Loop sui risultati di `elaborati_tecnici`: dopo l'apertura di un file si torna alla lista, con opzione **R** per una nuova ricerca.

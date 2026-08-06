@@ -22,5 +22,6 @@
 
 ## Architettura
 - Un solo file per applicazione, funzioni piccole e senza classi
-- La logica di ricerca è duplicata (non condivisa) tra CLI e web: **modificando l'una, valutare sempre l'allineamento dell'altra**
+- La logica di ricerca è duplicata (non condivisa) tra CLI e web: **modificando l'una, valutare sempre l'allineamento dell'altra**. Dal 2026-08-06 entrambe usano lo stesso schema: indice in memoria `(percorso, testo_ricercabile_lower)`, refresh in background, distinzione `name_match`
+- **Threading**: solo `threading.Thread(daemon=True)` per il refresh dell'indice, stato condiviso protetto da un `Lock`. Nessuna dipendenza esterna, nemmeno nella web app
 - UX CLI: schermo pulito ad ogni operazione, loop continuo, opzione **R** per nuova ricerca sui risultati elaborati_tecnici
