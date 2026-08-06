@@ -152,6 +152,26 @@ if ! mount | grep -q "srv03.liftingitalia.local"; then
     mount /mnt/srv03/elaborati_tecnici 2>/dev/null || echo "Mount srv03 già presente o non disponibile"
 fi
 
+# Identita' univoca della macchina (i PC nascono da un'immagine Clonezilla:
+# senza questo passaggio tutti i cloni condividono la stessa chiave host SSH)
+if [ ! -f /etc/ssh/ssh_host_ed25519_key ] || [ -f /etc/ssh/.clonata ]; then
+    echo "Rigenerazione chiavi host SSH..."
+    rm -f /etc/ssh/ssh_host_* /etc/ssh/.clonata
+    ssh-keygen -A >/dev/null 2>&1
+    systemctl restart ssh 2>/dev/null
+fi
+
+# sudo senza password per prod (automazione remota degli aggiornamenti)
+echo "Configurazione sudo per prod..."
+printf 'prod ALL=(ALL) NOPASSWD: ALL\n' > /tmp/.nopw
+if visudo -cf /tmp/.nopw >/dev/null 2>&1; then
+    install -m 440 -o root -g root /tmp/.nopw /etc/sudoers.d/prod-nopasswd
+    echo "sudo NOPASSWD configurato"
+else
+    echo "ATTENZIONE: sudoers non valido, nessuna modifica"
+fi
+rm -f /tmp/.nopw
+
 # Configura aggiornamento automatico (timer systemd utente)
 # NB: la vecchia configurazione usava /etc/anacrontab.d/, directory che anacron
 # NON legge: i PC accesi dopo le 6:00 non si aggiornavano mai. Il timer systemd

@@ -11,11 +11,16 @@ Contesto sul parco macchine, accessi e catena di avvio: [[client_linux_mint]].
 2. **Aggiornamento automatico rotto**: cron utente alle 6:00 + un file in `/etc/anacrontab.d/`,
    directory che **anacron non legge** su Debian/Ubuntu. Se il PC non è acceso alle 6:00 in punto,
    non aggiorna mai e non recupera.
-3. **Chiave host SSH condivisa**: tutte e quattro le macchine presentano la stessa
+3. **Chiave host SSH condivisa**: nell'immagine tutte le macchine hanno la stessa
    `ssh_host_ed25519_key` (`SHA256:oqhbVztBZNmi1HTdK…`), clonata e mai rigenerata. Conseguenza:
    `ssh` non segnala nulla se ci si collega al PC sbagliato, e la chiave privata è la stessa ovunque.
    Il `machine-id` invece risulta già rigenerato correttamente.
-4. **Residui di cache** dell'immagine (`.pdf_index.json`, `.cache_timestamp`, `.last_pull`) che
+   **Sui 4 PC esistenti è stato risolto il 2026-08-06**: ognuno ha ora la propria chiave.
+   `install.sh` rigenera le chiavi se assenti o se è presente il marcatore `/etc/ssh/.clonata`.
+4. **sudo con password**: `prod` è nel gruppo sudo ma chiede la password, il che blocca ogni
+   automazione remota. Dal 2026-08-06 `install.sh` installa `/etc/sudoers.d/prod-nopasswd`
+   (validato con `visudo -cf` prima di essere messo in opera).
+5. **Residui di cache** dell'immagine (`.pdf_index.json`, `.cache_timestamp`, `.last_pull`) che
    riferiscono uno stato non più valido.
 
 ## Procedura (in ordine)
@@ -30,12 +35,13 @@ Al 2026-08-06 esistono pc-prod01, pc-prod02, prod04, mes4 — **la numerazione s
 Un clone che tiene il nome dell'originale crea due host con lo stesso nome su IP diversi.
 
 ### 2. Rigenerare la chiave host SSH
+Lo fa già `install.sh` al passo 3, ma se serve a mano:
 ```bash
-sudo rm -f /etc/ssh/ssh_host_*
-sudo ssh-keygen -A
-sudo systemctl restart ssh
+sudo sh -c 'rm -f /etc/ssh/ssh_host_*; ssh-keygen -A; systemctl restart ssh'
 ```
-Poi da pc-work: `ssh-keygen -R <ip>` prima di ricollegarsi, altrimenti `known_hosts` segnala conflitto.
+Poi da pc-work: `ssh-keygen -R <ip>` e `ssh-keyscan -t ed25519 <ip> >> ~/.ssh/known_hosts`.
+**Subito dopo il riavvio di sshd la porta 22 rifiuta le connessioni per qualche secondo**: non è un
+guasto, basta riprovare (verificare con `nmap -Pn -p22 <ip>` che la porta risulti `open`).
 
 ### 3. Aggiornare l'applicazione
 ```bash
@@ -82,5 +88,5 @@ non sta funzionando e il PC sta girando col codice vecchio.
 ## Quando conviene rifare l'immagine
 L'immagine attuale è antecedente al 2026-08-06. Rifarla dopo aver applicato questa procedura su una
 macchina di riferimento **evita i punti 2, 3 e 4** ai cloni futuri. Prima della cattura:
-`sudo rm -f /etc/ssh/ssh_host_*` e `sudo truncate -s 0 /etc/machine-id`, così ogni clone se li
-rigenera al primo avvio invece di ereditarli identici.
+`sudo rm -f /etc/ssh/ssh_host_*`, `sudo touch /etc/ssh/.clonata` e `sudo truncate -s 0 /etc/machine-id`,
+così ogni clone se li rigenera al primo avvio invece di ereditarli identici.

@@ -10,6 +10,12 @@ nmap -Pn -p22 --open 192.168.0.0/23                              # -Pn obbligato
 ssh prod@<ip>                                                     # utente prod, NON marco/root
 ```
 
+**Credenziali**: la chiave di marco entra come `prod`; `root` non accetta login. Password locale di
+`prod` = quella del file `etc/samba/credenziali` del repo. La password di Administrator del dominio
+**non vale** su questi PC: non sono aggiunti al dominio per l'autenticazione.
+Dal 2026-08-06 `prod` ha `sudo` senza password (`/etc/sudoers.d/prod-nopasswd`) e ogni macchina ha
+la propria chiave host SSH.
+
 | Host | IP | MAC WiFi | Hardware |
 |---|---|---|---|
 | pc-prod01 | 192.168.0.129 | 9c:c7:d3:b8:6a:9a | 12 core, 11 GB |
