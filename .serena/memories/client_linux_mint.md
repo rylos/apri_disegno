@@ -24,6 +24,9 @@ e non ha mai preso un lease.
 **Non esiste un prod03**: nessun lease, nessun host in rete, nessun hostname duplicato tra i quattro
 (gli unici nomi duplicati nei lease sono notebook con cavo+WiFi). La numerazione salta semplicemente il 3.
 
+I PC sono costruiti ripristinando un'**immagine Clonezilla** che contiene una release vecchia e
+configurazioni da correggere: procedura di allineamento in [[clonezilla_aggiornamento_client]].
+
 ## Come funziona l'avvio (catena completa)
 1. **Autostart**: `~/.config/autostart/apri_disegno.desktop` → esegue `apri_disegno_loop.sh` al login
    della sessione Cinnamon (`Terminal=false`, quindi nessuna finestra propria).
