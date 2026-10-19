@@ -15,7 +15,7 @@ import re
 import threading
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 from flask import Flask, render_template, request, send_file, jsonify
 
 app = Flask(__name__)
@@ -140,8 +140,8 @@ def save_index(index: Dict[str, object]) -> None:
         pass
 
 
-def load_index() -> Dict[str, object]:
-    """Carica l'indice da disco se ancora valido, altrimenti lo ricostruisce"""
+def read_index_file() -> Optional[Dict[str, object]]:
+    """Indice salvato su disco, se ancora valido; None altrimenti"""
     try:
         if INDEX_FILE.exists():
             data = json.loads(INDEX_FILE.read_text())
@@ -152,7 +152,12 @@ def load_index() -> Dict[str, object]:
     except (OSError, ValueError, TypeError):
         pass
 
-    return build_index()
+    return None
+
+
+def load_index() -> Dict[str, object]:
+    """Carica l'indice da disco se ancora valido, altrimenti lo ricostruisce"""
+    return read_index_file() or build_index()
 
 
 def _rebuild_async() -> None:
@@ -169,8 +174,22 @@ def _rebuild_async() -> None:
 
 
 def get_index() -> Dict[str, object]:
-    """Indice corrente. Se scaduto avvia il refresh in background senza attendere"""
-    global _rebuilding
+    """Indice corrente. Se scaduto avvia il refresh in background senza attendere.
+
+    Con --preload ogni worker nasce con l'indice costruito dal master all'avvio
+    del container, che il master non aggiorna mai: un worker rinato dopo un
+    WORKER TIMEOUT si ritroverebbe con un indice vecchio di giorni. Prima di
+    ricostruire si rilegge quindi il file su disco, che l'altro worker tiene
+    aggiornato.
+    """
+    global _index, _rebuilding
+
+    if (time.time() - _index["built_at"]) > CACHE_DURATION:
+        from_disk = read_index_file()
+        if from_disk:
+            with _index_lock:
+                if from_disk["built_at"] > _index["built_at"]:
+                    _index = from_disk
 
     with _index_lock:
         index = _index
